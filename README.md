@@ -2,7 +2,7 @@
 
 Smart electronics repair marketplace — customer and vendor UI.
 
-**Stack (Phase 0):** React 19, TypeScript, Vite 8, Tailwind CSS v4, ESLint, Prettier, Jest + React Testing Library. React Router, shadcn/ui, TanStack Query, and other brief items are added in later setup tasks.
+**Stack (Phase 0):** React 19, TypeScript, Vite 8, Tailwind CSS v4, ESLint, Prettier, Jest + React Testing Library, React Router, TanStack Query, Axios, React Hook Form + Zod, shadcn/ui (Button installed), Lucide React. Animation libraries (GSAP, Motion, Lenis) land in Phase 1.
 
 ## Prerequisites
 
@@ -55,6 +55,19 @@ See `.env.example` for placeholders only. Never commit `.env`.
 ## Path alias
 
 `@/` maps to `src/` (Vite + TypeScript + Jest).
+
+## App structure
+
+```text
+src/
+├── components/   # ui (shadcn), layout, shared
+├── features/     # domain modules (auth, repairs, …)
+├── hooks/
+├── lib/          # api client, query client, utils
+├── pages/        # route-level views
+├── providers/
+└── routes/
+```
 
 ## Repository
 
