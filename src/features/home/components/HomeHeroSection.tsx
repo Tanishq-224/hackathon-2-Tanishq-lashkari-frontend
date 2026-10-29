@@ -40,7 +40,7 @@ export function HomeHeroSection() {
           delay={0}
           stagger={0.08}
           threshold={0.02}
-          scrollTriggerStart="top top+=88"
+          scrollTriggerStart="top top+=80"
           ease="power2.out"
         >
           <p className="max-w-3xl text-ui font-semibold tracking-[0.18em] text-primary uppercase lg:col-start-1">

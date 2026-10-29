@@ -31,7 +31,7 @@ export function useGsapHorizontalScroll(
   {
     enabled = true,
     onProgress,
-    pinStartOffset = 56,
+    pinStartOffset = 72,
   }: UseGsapHorizontalScrollOptions = {},
 ): void {
   useLayoutEffect(() => {
@@ -45,6 +45,8 @@ export function useGsapHorizontalScroll(
       return undefined
     }
 
+    gsap.set(railEl, { x: 0, force3D: true })
+
     /**
      * @description Computes maximum horizontal travel for the rail.
      * @returns {number} Negative pixel distance for `x` transform.
@@ -52,39 +54,47 @@ export function useGsapHorizontalScroll(
     const getScrollDistance = () => {
       const railWidth = railEl.scrollWidth
       const viewport = window.innerWidth
-      const travel = railWidth - viewport + 32
+      const travel = railWidth - viewport + 48
       return -Math.max(0, travel)
     }
 
     const scrollerProps = getScrollTriggerScrollerProps()
+    let ctx: gsap.Context | null = null
+    let setupRaf = 0
 
-    const ctx = gsap.context(() => {
-      const tween = gsap.to(railEl, {
-        x: getScrollDistance,
-        ease: 'none',
-        scrollTrigger: {
-          ...scrollerProps,
-          trigger: pinEl,
-          start: `top top+=${pinStartOffset}`,
-          pinReparent: true,
-          end: () => {
-            const distance = Math.abs(getScrollDistance())
-            return `+=${Math.max(distance * 1.05, window.innerHeight * 0.75)}`
+    /**
+     * @description Creates pin + horizontal scrub after layout is measured.
+     * @returns {void}
+     */
+    const setup = () => {
+      ctx?.revert()
+      ctx = gsap.context(() => {
+        gsap.to(railEl, {
+          x: getScrollDistance,
+          ease: 'none',
+          scrollTrigger: {
+            ...scrollerProps,
+            trigger: pinEl,
+            start: `top top+=${pinStartOffset}`,
+            end: () => {
+              const distance = Math.abs(getScrollDistance())
+              return `+=${Math.max(distance * 1.12, window.innerHeight)}`
+            },
+            pin: true,
+            pinSpacing: true,
+            pinReparent: true,
+            scrub: true,
+            anticipatePin: 1,
+            invalidateOnRefresh: true,
+            onUpdate: (self) => {
+              onProgress?.(self.progress)
+            },
           },
-          pin: true,
-          pinSpacing: true,
-          scrub: true,
-          anticipatePin: 1,
-          invalidateOnRefresh: true,
-          fastScrollEnd: true,
-          onUpdate: (self) => {
-            onProgress?.(self.progress)
-          },
-        },
-      })
+        })
+      }, pinEl)
 
-      void tween
-    }, pinEl)
+      ScrollTrigger.refresh()
+    }
 
     /**
      * @description Refreshes measurements after images load inside the rail.
@@ -109,16 +119,17 @@ export function useGsapHorizontalScroll(
       }
     })
 
-    refresh()
-    requestAnimationFrame(() => {
-      ScrollTrigger.refresh()
+    setupRaf = requestAnimationFrame(() => {
+      requestAnimationFrame(setup)
     })
 
     return () => {
+      cancelAnimationFrame(setupRaf)
       window.removeEventListener('load', refresh)
       window.removeEventListener('resize', refresh)
       resizeObserver?.disconnect()
-      ctx.revert()
+      ctx?.revert()
+      gsap.set(railEl, { clearProps: 'transform' })
     }
   }, [enabled, onProgress, pinRef, pinStartOffset, railRef])
 }

@@ -1,7 +1,6 @@
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import {
-  Children,
   useLayoutEffect,
   useRef,
   type CSSProperties,
@@ -26,9 +25,9 @@ export type ScrollFadeInProps = {
   distance?: number
   duration?: number
   ease?: string
-  /** @description Viewport threshold (0–1) before animation starts. */
+  /** @description Viewport threshold (0–1) for early reveal helpers. */
   threshold?: number
-  /** @description Wait after scroll trigger before motion begins (seconds). */
+  /** @description Wait before motion begins (seconds). */
   delay?: number
   /** @description Seconds between each direct child animation. */
   stagger?: number
@@ -48,15 +47,15 @@ export function ScrollFadeIn({
   as: Tag = 'div',
   className,
   style,
-  distance = 28,
-  duration = 0.78,
+  distance = 24,
+  duration = 0.65,
   ease = 'power2.out',
-  threshold = 0.15,
-  delay = 0.2,
-  stagger = 0.12,
+  threshold = 0.08,
+  delay = 0,
+  stagger = 0.1,
   once = true,
   disabled = false,
-  scrollTriggerStart = 'top 92%',
+  scrollTriggerStart = 'top 85%',
 }: ScrollFadeInProps) {
   const ref = useRef<HTMLElement>(null)
   const skipMotion = isTestEnv()
@@ -86,53 +85,94 @@ export function ScrollFadeIn({
     const useChildStagger = stagger > 0 && childElements.length > 1
     const targets = useChildStagger ? childElements : [el]
 
-    gsap.set(targets, { autoAlpha: 0, y: distance })
-
     const scrollerProps = getScrollTriggerScrollerProps()
+    let revealed = false
 
-    const ctx = gsap.context(() => {
+    /**
+     * @description Plays the fade-in tween (idempotent).
+     * @param {Partial<gsap.TweenVars>} [overrides] - Optional GSAP overrides.
+     * @returns {void}
+     */
+    const reveal = (overrides?: gsap.TweenVars) => {
+      if (revealed && once) {
+        return
+      }
+      revealed = true
       gsap.to(targets, {
         autoAlpha: 1,
         y: 0,
-        duration,
+        duration: overrides?.duration ?? duration,
         ease,
-        delay,
-        stagger: useChildStagger ? stagger : undefined,
-        scrollTrigger: {
-          ...scrollerProps,
-          trigger: el,
-          start: scrollTriggerStart,
-          once,
-          invalidateOnRefresh: true,
+        delay: overrides?.delay ?? delay,
+        stagger: useChildStagger ? (overrides?.stagger ?? stagger) : undefined,
+        overwrite: 'auto',
+      })
+    }
+
+    gsap.set(targets, { autoAlpha: 0, y: distance })
+
+    const ctx = gsap.context(() => {
+      ScrollTrigger.create({
+        ...scrollerProps,
+        trigger: el,
+        start: scrollTriggerStart,
+        once,
+        invalidateOnRefresh: true,
+        onEnter: () => reveal(),
+        onEnterBack: () => {
+          if (!once) {
+            revealed = false
+            reveal()
+          }
         },
       })
     }, el)
 
+    if (ScrollTrigger.isInViewport(el, threshold)) {
+      reveal({ duration: Math.min(duration, 0.5), delay: 0 })
+    }
+
+    const intersectionObserver =
+      typeof IntersectionObserver !== 'undefined'
+        ? new IntersectionObserver(
+            (entries) => {
+              entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                  reveal({ duration: Math.min(duration, 0.5), delay: 0 })
+                }
+              })
+            },
+            { root: null, threshold: 0.05, rootMargin: '0px 0px -5% 0px' },
+          )
+        : null
+
+    intersectionObserver?.observe(el)
+
     /**
-     * @description Reveals above-the-fold blocks that are already in view on first paint.
+     * @description Safety net if ScrollTrigger/Lenis miss the first intersection.
+     * @returns {void}
      */
-    const revealIfVisible = () => {
-      ScrollTrigger.refresh()
+    const safetyReveal = () => {
       const rect = el.getBoundingClientRect()
-      if (rect.top < window.innerHeight * (1 - threshold) && rect.bottom > 0) {
-        gsap.to(targets, {
-          autoAlpha: 1,
-          y: 0,
-          duration: Math.min(duration, 0.45),
-          ease,
-          delay: 0,
-          stagger: useChildStagger ? Math.min(stagger, 0.05) : undefined,
-          overwrite: 'auto',
-        })
+      const inView =
+        rect.top < window.innerHeight * (1 - threshold) && rect.bottom > 0
+      if (inView) {
+        reveal({ duration: Math.min(duration, 0.5), delay: 0 })
       }
     }
 
-    revealIfVisible()
-    requestAnimationFrame(revealIfVisible)
-    window.addEventListener('load', revealIfVisible)
+    safetyReveal()
+    requestAnimationFrame(safetyReveal)
+    window.addEventListener('load', safetyReveal)
+
+    const safetyTimer = window.setTimeout(() => {
+      gsap.set(targets, { autoAlpha: 1, y: 0, clearProps: 'transform' })
+    }, 2500)
 
     return () => {
-      window.removeEventListener('load', revealIfVisible)
+      window.clearTimeout(safetyTimer)
+      window.removeEventListener('load', safetyReveal)
+      intersectionObserver?.disconnect()
       ctx.revert()
     }
   }, [
@@ -141,23 +181,17 @@ export function ScrollFadeIn({
     distance,
     duration,
     ease,
-    skipMotion,
     once,
     scrollTriggerStart,
+    skipMotion,
     stagger,
     threshold,
   ])
 
   const Component = Tag as ElementType
-  const usesChildStagger = stagger > 0 && Children.count(children) > 1
-  const hideUntilReveal = !usesChildStagger && !disabled && !skipMotion
 
   return (
-    <Component
-      ref={ref}
-      className={cn(hideUntilReveal && 'opacity-0', className)}
-      style={style}
-    >
+    <Component ref={ref} className={cn(className)} style={style}>
       {children}
     </Component>
   )

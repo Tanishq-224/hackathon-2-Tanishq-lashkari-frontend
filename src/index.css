@@ -405,6 +405,14 @@
     overscroll-behavior-x: contain;
   }
 
+  .why-choose-section {
+    overflow: visible !important;
+  }
+
+  .why-choose-section > div.relative {
+    overflow: visible;
+  }
+
   .dashboard-main {
     -webkit-overflow-scrolling: touch;
   }

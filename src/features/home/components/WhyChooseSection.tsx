@@ -1,5 +1,5 @@
 import { ArrowRight } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useLayoutEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import deviceLaptopWork from '@/assets/devices/device-laptop-work.png'
@@ -174,9 +174,17 @@ export function WhyChooseSection() {
   const pinRef = useRef<HTMLDivElement>(null)
   const railRef = useRef<HTMLDivElement>(null)
   const [activeIndex, setActiveIndex] = useState(0)
-  const [useNativeRail, setUseNativeRail] = useState(false)
+  const [useNativeRail, setUseNativeRail] = useState(() => {
+    if (typeof window === 'undefined') {
+      return false
+    }
+    return (
+      window.matchMedia('(max-width: 1023px)').matches ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    )
+  })
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const motionMedia = window.matchMedia('(prefers-reduced-motion: reduce)')
     const layoutMedia = window.matchMedia('(max-width: 1023px)')
 
@@ -224,7 +232,7 @@ export function WhyChooseSection() {
     <SectionSurface
       tone="band"
       ariaLabel="Why choose Repairex"
-      className="!overflow-visible !pb-0"
+      className="why-choose-section !overflow-visible !pb-0"
     >
       <Container>
         <SectionHeader
