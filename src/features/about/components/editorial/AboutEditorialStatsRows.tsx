@@ -16,7 +16,7 @@ const stats = [
 ] as const
 
 /**
- * @description Product-factual stat rows (no unverified marketing claims).
+ * @description Light stat rows band (product facts only).
  * @returns {JSX.Element} Stats section.
  */
 export function AboutEditorialStatsRows() {
@@ -25,11 +25,11 @@ export function AboutEditorialStatsRows() {
       aria-label="Repairex product structure highlights"
       className="px-4 py-6 sm:px-6 lg:px-8"
     >
-      <AboutEditorialShell tone="band" className="space-y-3 p-4 sm:p-5">
+      <AboutEditorialShell tone="light" className="space-y-3 p-4 sm:p-5">
         {stats.map(({ label, value }) => (
           <div
             key={label}
-            className="theme-marketing-card flex flex-col gap-3 rounded-[1.25rem] px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8 sm:py-6"
+            className="theme-marketing-card flex flex-col gap-3 rounded-[1.25rem] border border-border/80 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8 sm:py-6"
           >
             <p className="max-w-xl text-body leading-relaxed text-muted-foreground">
               {label}

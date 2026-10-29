@@ -5,7 +5,7 @@ import aboutMissionMedia from '@/assets/devices/device-laptop-work.png'
 import { AboutEditorialShell } from '@/features/about/components/editorial/AboutEditorialShell'
 
 /**
- * @description Mission band with media row (Repairex solution — no fake testimonials).
+ * @description Light mission band (warm card) between dark editorial sections.
  * @returns {JSX.Element} Mission statement section.
  */
 export function AboutEditorialMissionBand() {
@@ -14,7 +14,7 @@ export function AboutEditorialMissionBand() {
       aria-label="The Repairex solution"
       className="px-4 py-6 sm:px-6 lg:px-8"
     >
-      <AboutEditorialShell tone="canvas" className="p-6 sm:p-8 lg:p-12">
+      <AboutEditorialShell tone="light" className="p-6 sm:p-8 lg:p-12">
         <p className="mx-auto max-w-4xl text-center font-display text-[clamp(1.5rem,3.6vw,2.65rem)] leading-snug font-bold tracking-tight text-foreground">
           <span className="text-muted-foreground">
             We connect customers and vendors through a single workflow —
@@ -33,7 +33,7 @@ export function AboutEditorialMissionBand() {
               alt=""
               className="aspect-[16/10] w-full object-cover opacity-95"
             />
-            <div className="absolute inset-0 bg-foreground/15" />
+            <div className="absolute inset-0 bg-foreground/10" />
             <Link
               to="/#how-it-works"
               className="absolute inset-0 flex items-center justify-center"
@@ -45,7 +45,7 @@ export function AboutEditorialMissionBand() {
             </Link>
           </div>
 
-          <aside className="theme-marketing-card flex flex-col justify-between rounded-[1.35rem] p-6">
+          <aside className="theme-marketing-card flex flex-col justify-between rounded-[1.35rem] border border-border/80 p-6">
             <div>
               <p className="text-ui font-semibold tracking-[0.16em] text-primary uppercase">
                 Accountability
