@@ -4,6 +4,10 @@ import Lenis from 'lenis'
 import { useLayoutEffect, type ReactNode } from 'react'
 
 import { isTestEnv } from '@/lib/is-test-env'
+import {
+  REPAIREX_SCROLL_LOCK_EVENT,
+  type RepairexScrollLockDetail,
+} from '@/lib/scroll-lock'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -32,9 +36,9 @@ export function LenisScrollProvider({ children }: LenisScrollProviderProps) {
     }
 
     const lenis = new Lenis({
-      autoRaf: true,
+      autoRaf: false,
       anchors: true,
-      lerp: 0.09,
+      lerp: 0.12,
       smoothWheel: true,
       respectReducedMotion: true,
     })
@@ -50,6 +54,17 @@ export function LenisScrollProvider({ children }: LenisScrollProviderProps) {
     }
 
     lenis.on('scroll', onLenisScroll)
+
+    /**
+     * @description Drives Lenis from GSAP ticker so scrubbed ScrollTriggers track the wheel 1:1.
+     * @param {number} time - GSAP ticker time in seconds.
+     * @returns {void}
+     */
+    const onGsapTick = (time: number) => {
+      lenis.raf(time * 1000)
+    }
+
+    gsap.ticker.add(onGsapTick)
 
     ScrollTrigger.scrollerProxy(document.documentElement, {
       scrollTop(value) {
@@ -89,6 +104,22 @@ export function LenisScrollProvider({ children }: LenisScrollProviderProps) {
       ScrollTrigger.refresh()
     }
 
+    /**
+     * @description Lets scroll-expansion heroes pause Lenis while capturing wheel input.
+     * @param {Event} event - Custom lock event.
+     * @returns {void}
+     */
+    const onRepairexScrollLock = (event: Event) => {
+      const { locked } = (event as CustomEvent<RepairexScrollLockDetail>).detail
+      if (locked) {
+        lenis.stop()
+      } else {
+        lenis.start()
+        lenis.resize()
+      }
+    }
+
+    window.addEventListener(REPAIREX_SCROLL_LOCK_EVENT, onRepairexScrollLock)
     window.addEventListener('load', onWindowLoad)
     ScrollTrigger.refresh()
     requestAnimationFrame(() => {
@@ -96,8 +127,10 @@ export function LenisScrollProvider({ children }: LenisScrollProviderProps) {
     })
 
     return () => {
+      window.removeEventListener(REPAIREX_SCROLL_LOCK_EVENT, onRepairexScrollLock)
       window.removeEventListener('load', onWindowLoad)
       ScrollTrigger.removeEventListener('refresh', onScrollTriggerRefresh)
+      gsap.ticker.remove(onGsapTick)
       lenis.off('scroll', onLenisScroll)
       lenis.destroy()
       document.documentElement.classList.remove('lenis')

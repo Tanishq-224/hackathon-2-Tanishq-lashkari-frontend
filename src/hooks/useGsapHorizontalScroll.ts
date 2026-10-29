@@ -48,74 +48,98 @@ export function useGsapHorizontalScroll(
     gsap.set(railEl, { x: 0, force3D: true })
 
     /**
-     * @description Computes maximum horizontal travel for the rail.
-     * @returns {number} Negative pixel distance for `x` transform.
+     * @description Horizontal travel so the last card sits fully inside the clip frame.
+     * @returns {number} Negative pixel distance for the rail `x` transform.
      */
     const getScrollDistance = () => {
-      const railWidth = railEl.scrollWidth
-      const viewport = window.innerWidth
-      const travel = railWidth - viewport + 48
+      const frame = railEl.parentElement?.clientWidth ?? window.innerWidth
+      const travel = railEl.scrollWidth - frame
       return -Math.max(0, travel)
     }
 
     const scrollerProps = getScrollTriggerScrollerProps()
     let ctx: gsap.Context | null = null
     let setupRaf = 0
+    let remeasureTimer = 0
+    let lastRailScrollWidth = 0
+    let lastViewportWidth = 0
 
     /**
-     * @description Creates pin + horizontal scrub after layout is measured.
+     * @description Vertical scroll span while pinned — longer than raw travel so wheel input feels gradual, not jumpy.
+     * @returns {number}
+     */
+    const getScrollSpan = () => {
+      const travel = Math.abs(getScrollDistance())
+      const floor = Math.round(window.innerHeight * 1.15)
+      return Math.max(travel, floor, 1)
+    }
+
+    /**
+     * @description Creates pin + maps scroll progress directly to rail `x` (no tween lag).
      * @returns {void}
      */
     const setup = () => {
       ctx?.revert()
+      gsap.set(railEl, { x: 0, force3D: true })
+
       ctx = gsap.context(() => {
-        gsap.to(railEl, {
-          x: getScrollDistance,
-          ease: 'none',
-          scrollTrigger: {
-            ...scrollerProps,
-            trigger: pinEl,
-            start: `top top+=${pinStartOffset}`,
-            end: () => {
-              const distance = Math.abs(getScrollDistance())
-              return `+=${Math.max(distance * 1.12, window.innerHeight)}`
-            },
-            pin: true,
-            pinSpacing: true,
-            pinReparent: true,
-            scrub: true,
-            anticipatePin: 1,
-            invalidateOnRefresh: true,
-            onUpdate: (self) => {
-              onProgress?.(self.progress)
-            },
+        ScrollTrigger.create({
+          ...scrollerProps,
+          trigger: pinEl,
+          start: `top top+=${pinStartOffset}`,
+          end: () => `+=${getScrollSpan()}`,
+          pin: true,
+          pinSpacing: true,
+          scrub: true,
+          anticipatePin: 0,
+          invalidateOnRefresh: true,
+          onUpdate: (self) => {
+            const travel = getScrollDistance()
+            gsap.set(railEl, {
+              x: self.progress * travel,
+              force3D: true,
+            })
+            onProgress?.(self.progress)
           },
         })
       }, pinEl)
 
+      lastRailScrollWidth = railEl.scrollWidth
+      lastViewportWidth = window.innerWidth
       ScrollTrigger.refresh()
     }
 
     /**
-     * @description Refreshes measurements after images load inside the rail.
+     * @description Rebuilds only when rail width or viewport actually changed (avoids mid-scrub jumps).
      * @returns {void}
      */
-    const refresh = () => {
-      ScrollTrigger.refresh()
+    const scheduleRemeasure = () => {
+      window.clearTimeout(remeasureTimer)
+      remeasureTimer = window.setTimeout(() => {
+        const nextRailWidth = railEl.scrollWidth
+        const nextViewportWidth = window.innerWidth
+        if (
+          Math.abs(nextRailWidth - lastRailScrollWidth) < 4 &&
+          nextViewportWidth === lastViewportWidth
+        ) {
+          return
+        }
+        setup()
+      }, 120)
     }
 
-    window.addEventListener('load', refresh)
-    window.addEventListener('resize', refresh)
+    window.addEventListener('load', scheduleRemeasure)
+    window.addEventListener('resize', scheduleRemeasure)
 
     const resizeObserver =
       typeof ResizeObserver !== 'undefined'
-        ? new ResizeObserver(refresh)
+        ? new ResizeObserver(scheduleRemeasure)
         : null
 
     resizeObserver?.observe(railEl)
     railEl.querySelectorAll('img').forEach((img) => {
       if (!img.complete) {
-        img.addEventListener('load', refresh, { once: true })
+        img.addEventListener('load', scheduleRemeasure, { once: true })
       }
     })
 
@@ -125,8 +149,9 @@ export function useGsapHorizontalScroll(
 
     return () => {
       cancelAnimationFrame(setupRaf)
-      window.removeEventListener('load', refresh)
-      window.removeEventListener('resize', refresh)
+      window.clearTimeout(remeasureTimer)
+      window.removeEventListener('load', scheduleRemeasure)
+      window.removeEventListener('resize', scheduleRemeasure)
       resizeObserver?.disconnect()
       ctx?.revert()
       gsap.set(railEl, { clearProps: 'transform' })

@@ -198,6 +198,117 @@ describe('Phase 3 Customer Repairs UI', () => {
     ).toBeInTheDocument()
   })
 
+  it('does not show authorization buttons for admin (API is customer-only)', () => {
+    const mockRepair: RepairItem = {
+      id: 'rep-admin',
+      customerId: 'cust-1',
+      deviceType: 'phone',
+      brand: 'Apple',
+      modelName: 'iPhone 14',
+      issueCategory: 'screen',
+      description: 'Cracked display.',
+      images: [],
+      urgency: 'medium',
+      status: 'diagnosed',
+      assignedVendorId: 'vend-1',
+      assignedVendorName: 'Apex Tech',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+
+    const mockQuotation: QuotationItem = {
+      id: 'quote-admin',
+      repairRequestId: 'rep-admin',
+      vendorId: 'vend-1',
+      vendorName: 'Apex Tech',
+      diagnosticFindings: 'Display assembly requires replacement.',
+      lineItems: [{ description: 'OLED panel', category: 'parts', cost: 180 }],
+      totalAmount: 180,
+      estimatedCompletion: '2 Days',
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    })
+    queryClient.setQueryData(repairQuotationQueryKey('rep-admin'), mockQuotation)
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <RepairQuotationSection
+            repair={mockRepair}
+            userRole="admin"
+            userId="admin-1"
+          />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+
+    expect(
+      screen.queryByRole('button', { name: /Approve & Authorize Repair/i }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByText(/awaiting approval from the customer/i),
+    ).toBeInTheDocument()
+  })
+
+  it('formats string line-item costs without crashing', () => {
+    const mockRepair: RepairItem = {
+      id: 'rep-str',
+      customerId: 'cust-1',
+      deviceType: 'tablet',
+      brand: 'Apple',
+      modelName: 'iPad Air',
+      issueCategory: 'hardware',
+      description: 'No charge.',
+      images: [],
+      urgency: 'low',
+      status: 'diagnosed',
+      assignedVendorId: 'vend-1',
+      assignedVendorName: 'Apex Tech',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+
+    const mockQuotation = {
+      id: 'quote-str',
+      repairRequestId: 'rep-str',
+      vendorId: 'vend-1',
+      vendorName: 'Apex Tech',
+      diagnosticFindings: 'Port wear observed under microscope.',
+      lineItems: [
+        { description: 'USB-C port', category: 'parts' as const, cost: '55.5' as unknown as number },
+      ],
+      totalAmount: '55.5' as unknown as number,
+      estimatedCompletion: '1 Day',
+      status: 'pending' as const,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    })
+    queryClient.setQueryData(repairQuotationQueryKey('rep-str'), mockQuotation)
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <RepairQuotationSection
+            repair={mockRepair}
+            userRole="customer"
+            userId="cust-1"
+          />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+
+    expect(screen.getAllByText('$55.50').length).toBeGreaterThan(0)
+  })
+
   it('renders vendor start repair action when quote is approved', () => {
     const mockRepair: RepairItem = {
       id: 'rep-789',
@@ -226,6 +337,68 @@ describe('Phase 3 Customer Repairs UI', () => {
         <MemoryRouter>
           <RepairCompletionSection
             repair={mockRepair}
+            userRole="vendor"
+            userId="vend-1"
+          />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+
+    expect(screen.getByText(/Repair Execution & Completion/i)).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /Start Repair Work/i }),
+    ).toBeInTheDocument()
+  })
+
+  it('mounts completion section after status advances to quote_approved (post-approval)', () => {
+    const diagnosedRepair: RepairItem = {
+      id: 'rep-lifecycle',
+      customerId: 'cust-1',
+      deviceType: 'phone',
+      brand: 'Google',
+      modelName: 'Pixel 8',
+      issueCategory: 'battery',
+      description: 'Battery drains quickly.',
+      images: [],
+      urgency: 'medium',
+      status: 'diagnosed',
+      assignedVendorId: 'vend-1',
+      assignedVendorName: 'Apex Tech',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+
+    const approvedRepair: RepairItem = {
+      ...diagnosedRepair,
+      status: 'quote_approved',
+      finalApprovedAmount: 149,
+    }
+
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    })
+
+    const { rerender } = render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <RepairCompletionSection
+            repair={diagnosedRepair}
+            userRole="vendor"
+            userId="vend-1"
+          />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+
+    expect(
+      screen.queryByText(/Repair Execution & Completion/i),
+    ).not.toBeInTheDocument()
+
+    rerender(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <RepairCompletionSection
+            repair={approvedRepair}
             userRole="vendor"
             userId="vend-1"
           />

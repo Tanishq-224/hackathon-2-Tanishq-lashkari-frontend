@@ -186,6 +186,8 @@
 
   body {
     @apply bg-background font-sans text-body text-foreground;
+    /* Contain GSAP horizontal rails / w-max bleed without clipping vertical overlays */
+    overflow-x: clip;
   }
 
   h1,
@@ -405,6 +407,12 @@
     overscroll-behavior-x: contain;
   }
 
+  @media (min-width: 1024px) {
+    .why-cinematic-rail:not([data-native-rail='true']) {
+      scroll-snap-type: none;
+    }
+  }
+
   .why-choose-section {
     overflow: visible !important;
   }
@@ -435,6 +443,24 @@
 
   .contact-scroll-hero__overlay h2 {
     text-shadow: 0 2px 20px rgb(0 0 0 / 35%);
+  }
+
+  .about-scroll-hero {
+    width: 100%;
+    background-color: #08090b;
+    overflow: visible;
+  }
+
+  .about-scroll-hero__stage {
+    display: block;
+  }
+
+  .about-scroll-hero__overlay h2 {
+    text-shadow: 0 2px 20px rgb(0 0 0 / 35%);
+  }
+
+  .about-workflow-showcase {
+    overflow: visible;
   }
 
   html.public-mobile-nav-open {

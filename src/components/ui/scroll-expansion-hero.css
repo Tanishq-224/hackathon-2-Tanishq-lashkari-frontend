@@ -1,0 +1,149 @@
+.scroll-expansion-hero {
+  position: relative;
+  width: 100%;
+}
+
+.scroll-expansion-hero--window {
+  height: auto;
+  min-height: 0;
+}
+
+.scroll-expansion-hero__track {
+  position: relative;
+  width: 100%;
+  min-height: 1px;
+}
+
+.scroll-expansion-hero__stage {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.scroll-expansion-hero__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  will-change: opacity;
+}
+
+.scroll-expansion-hero__bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.scroll-expansion-hero__inner {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  height: 100%;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.scroll-expansion-hero__box {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 0;
+  max-width: 95vw;
+  max-height: 85vh;
+  translate: -50% -50%;
+  overflow: hidden;
+  border-radius: 1rem;
+  box-shadow: 0 0 50px rgb(0 0 0 / 35%);
+  will-change: width, height;
+}
+
+.scroll-expansion-hero__media {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+  will-change: transform;
+  transform-origin: center;
+}
+
+.scroll-expansion-hero__scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(
+    to top,
+    rgb(0 0 0 / 72%),
+    rgb(0 0 0 / 12%) 45%,
+    rgb(0 0 0 / 38%)
+  );
+  opacity: 0;
+  will-change: opacity;
+}
+
+.scroll-expansion-hero__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6%;
+  text-align: center;
+  opacity: 0;
+  will-change: opacity, transform;
+}
+
+.scroll-expansion-hero__titles {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  text-align: center;
+  pointer-events: none;
+}
+
+.scroll-expansion-hero__title-line {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 3.75rem);
+  font-weight: 700;
+  line-height: 1.05;
+  will-change: opacity, transform;
+}
+
+.scroll-expansion-hero__meta {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -3.25rem;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  text-align: center;
+  pointer-events: none;
+}
+
+.scroll-expansion-hero__hint {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 1.25rem;
+  z-index: 10;
+  text-align: center;
+  font-size: 0.8125rem;
+  letter-spacing: 0.02em;
+  color: rgb(255 255 255 / 55%);
+  will-change: opacity, transform;
+}

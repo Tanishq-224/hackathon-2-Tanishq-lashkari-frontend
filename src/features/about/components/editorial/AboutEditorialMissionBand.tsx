@@ -1,7 +1,4 @@
-import { Play } from 'lucide-react'
-import { Link } from 'react-router-dom'
-
-import aboutMissionMedia from '@/assets/devices/device-laptop-work.png'
+import aboutAccountabilityProgress from '@/assets/about-accountability-progress.jpg'
 import { AboutEditorialShell } from '@/features/about/components/editorial/AboutEditorialShell'
 
 /**
@@ -29,20 +26,10 @@ export function AboutEditorialMissionBand() {
             id="about-workflow-media"
           >
             <img
-              src={aboutMissionMedia}
-              alt=""
-              className="aspect-[16/10] w-full object-cover opacity-95"
+              src={aboutAccountabilityProgress}
+              alt="Repairex workflow from request submitted through comparing estimates, approval, and in-repair status on dashboard"
+              className="aspect-[16/10] w-full bg-primary/10 object-cover object-center scale-[1.02]"
             />
-            <div className="absolute inset-0 bg-foreground/10" />
-            <Link
-              to="/#how-it-works"
-              className="absolute inset-0 flex items-center justify-center"
-              aria-label="Open home workflow section"
-            >
-              <span className="flex size-16 items-center justify-center rounded-full bg-card text-foreground shadow-lg transition hover:scale-105">
-                <Play aria-hidden className="ml-1 size-7 fill-current" />
-              </span>
-            </Link>
           </div>
 
           <aside className="theme-marketing-card flex flex-col justify-between rounded-[1.35rem] border border-border/80 p-6">

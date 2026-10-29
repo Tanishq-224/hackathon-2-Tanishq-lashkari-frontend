@@ -57,10 +57,6 @@ export function RepairCompletionSection({
     'completed',
   ].includes(repair.status)
 
-  if (!showSection) {
-    return null
-  }
-
   const invalidate = () => {
     void queryClient.invalidateQueries({ queryKey: repairDetailQueryKey(repair.id) })
   }
@@ -101,6 +97,10 @@ export function RepairCompletionSection({
     },
     onError: (err) => setErrorMessage(getApiErrorMessage(err)),
   })
+
+  if (!showSection) {
+    return null
+  }
 
   async function handleAfterPhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files

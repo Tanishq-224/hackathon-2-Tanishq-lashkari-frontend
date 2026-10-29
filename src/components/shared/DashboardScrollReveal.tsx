@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react'
 
-import { ScrollFadeIn } from '@/components/shared/ScrollFadeIn'
-import { isTestEnv } from '@/lib/is-test-env'
+import { cn } from '@/lib/utils'
 
 type DashboardScrollRevealProps = {
   children: ReactNode
@@ -9,25 +8,13 @@ type DashboardScrollRevealProps = {
 }
 
 /**
- * @description Soft GSAP fade-in for dashboard pages (fast, minimal travel).
- * @param {DashboardScrollRevealProps} props - Page content to reveal.
- * @returns {JSX.Element} Animated wrapper.
+ * @description Dashboard content wrapper — no scroll-driven opacity (keeps repair flows instantly visible).
+ * @param {DashboardScrollRevealProps} props - Page content.
+ * @returns {JSX.Element} Stable layout wrapper.
  */
 export function DashboardScrollReveal({
   children,
   className,
 }: DashboardScrollRevealProps) {
-  return (
-    <ScrollFadeIn
-      className={className}
-      distance={14}
-      duration={0.55}
-      delay={0.05}
-      stagger={0.06}
-      threshold={0.05}
-      disabled={isTestEnv()}
-    >
-      {children}
-    </ScrollFadeIn>
-  )
+  return <div className={cn('min-w-0', className)}>{children}</div>
 }

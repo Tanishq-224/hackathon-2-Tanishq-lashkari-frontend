@@ -1,10 +1,16 @@
 import { ArrowRight } from 'lucide-react'
-import { useCallback, useLayoutEffect, useRef, useState } from 'react'
+import {
+  useCallback,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type RefObject,
+} from 'react'
 import { Link } from 'react-router-dom'
 
-import deviceLaptopWork from '@/assets/devices/device-laptop-work.png'
-import deviceLifestyle from '@/assets/devices/device-lifestyle.jpg'
-import devicePhone from '@/assets/devices/device-phone.jpg'
+import whyCompareQuotations from '@/assets/devices/why-compare-quotations.jpg'
+import whyInformedApproval from '@/assets/devices/why-informed-approval.jpg'
+import whyStructuredWorkflow from '@/assets/devices/why-structured-workflow.jpg'
 import { Container } from '@/components/shared/Container'
 import { SectionHeader } from '@/components/shared/SectionHeader'
 import { SectionSurface } from '@/components/shared/SectionSurface'
@@ -28,6 +34,9 @@ type WhyCard =
       imageSrc: string
       imageAlt: string
       wide?: boolean
+      /** @description Mockup fills the media frame edge-to-edge. */
+      imageFit?: 'cover' | 'mockup'
+      mockupAlign?: 'top' | 'center'
     }
 
 const whyCards: WhyCard[] = [
@@ -46,9 +55,10 @@ const whyCards: WhyCard[] = [
     title: 'Compare options with confidence',
     description:
       'Review eligible vendor estimates side by side so scope, timing, and cost stay visible from the start.',
-    imageSrc: devicePhone,
-    imageAlt: 'Customer comparing repair estimates on a phone',
+    imageSrc: whyCompareQuotations,
+    imageAlt: 'Dashboard mockup comparing technician quotations side by side',
     wide: true,
+    imageFit: 'mockup',
   },
   {
     key: 'approval',
@@ -56,8 +66,10 @@ const whyCards: WhyCard[] = [
     title: 'Informed approval',
     description:
       'Diagnosis reports and itemized final quotes keep you in control before work begins.',
-    imageSrc: deviceLifestyle,
-    imageAlt: 'Technician inspecting electronics in a workshop',
+    imageSrc: whyInformedApproval,
+    imageAlt: 'How It Works workflow on laptop — submit request through repair completion',
+    imageFit: 'mockup',
+    mockupAlign: 'center',
   },
   {
     key: 'accountability',
@@ -74,9 +86,11 @@ const whyCards: WhyCard[] = [
     title: 'Structured workflow',
     description:
       'Requests, vendor selection, quotation approval, and updates follow clear rules — not ad-hoc messages.',
-    imageSrc: deviceLaptopWork,
-    imageAlt: 'Laptop ready for structured repair workflow',
+    imageSrc: whyStructuredWorkflow,
+    imageAlt: 'Monitor showing Repairex approval process from quotation review to schedule repair',
     wide: true,
+    imageFit: 'mockup',
+    mockupAlign: 'center',
   },
 ]
 
@@ -91,7 +105,7 @@ type WhyStatCardProps = {
  */
 function WhyStatCard({ card }: WhyStatCardProps) {
   return (
-    <article className="why-cinematic-stat flex h-[min(68vh,25rem)] w-[min(78vw,19rem)] shrink-0 flex-col justify-between rounded-[var(--card-marketing-radius)] p-6 text-white sm:w-[22rem]">
+    <article className="why-cinematic-stat flex h-[min(68vh,25rem)] w-[min(78vw,19rem)] shrink-0 flex-col justify-between rounded-[var(--card-marketing-radius)] p-6 text-white sm:w-[22rem] lg:h-[min(46vh,22rem)]">
       <div>
         <span className="text-caption font-medium text-white/55">{card.eyebrow}</span>
         <p className="font-display mt-4 text-[clamp(1.5rem,3.2vw,2rem)] font-bold leading-tight tracking-tight">
@@ -119,21 +133,38 @@ function WhyVisualCard({ card }: WhyVisualCardProps) {
   return (
     <article
       className={cn(
-        'theme-marketing-card flex h-[min(68vh,25rem)] w-[min(78vw,20rem)] shrink-0 flex-col overflow-hidden p-0 sm:w-[24rem]',
+        'theme-marketing-card flex h-[min(68vh,25rem)] w-[min(78vw,20rem)] shrink-0 flex-col overflow-hidden p-0 sm:w-[24rem] lg:h-[min(46vh,22rem)]',
         card.wide && 'sm:w-[min(88vw,34rem)]',
       )}
     >
-      <div className="relative min-h-0 flex-1 overflow-hidden bg-muted">
+      <div
+        className={cn(
+          'relative min-h-0 flex-1 overflow-hidden',
+          card.imageFit === 'mockup' ? 'min-h-[11.5rem] bg-card sm:min-h-[13rem]' : 'bg-muted',
+        )}
+      >
         <img
           src={card.imageSrc}
           alt={card.imageAlt}
-          className="why-cinematic-image size-full object-cover object-center"
+          className={cn(
+            'why-cinematic-image block h-full w-full',
+            card.imageFit === 'mockup'
+              ? cn(
+                  'object-cover scale-[1.015]',
+                  card.mockupAlign === 'center'
+                    ? 'object-center'
+                    : 'object-top [object-position:center_0%]',
+                )
+              : 'object-cover object-center',
+          )}
           loading="lazy"
         />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/40 via-transparent to-black/10"
-        />
+        {card.imageFit !== 'mockup' ? (
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/40 via-transparent to-black/10"
+          />
+        ) : null}
       </div>
       <div className="border-t border-border/80 p-5 sm:p-6">
         <h3 className="font-display text-h3 font-semibold text-foreground">{card.title}</h3>
@@ -155,28 +186,74 @@ type WhyCaptionProps = {
  * @param {WhyCaptionProps} props - Active card title and description.
  * @returns {JSX.Element} Caption block.
  */
-function WhyCaption({ title, description }: WhyCaptionProps) {
+type WhyCaptionElementProps = WhyCaptionProps & {
+  titleRef?: RefObject<HTMLHeadingElement | null>
+  descriptionRef?: RefObject<HTMLParagraphElement | null>
+}
+
+function WhyCaption({
+  title,
+  description,
+  titleRef,
+  descriptionRef,
+}: WhyCaptionElementProps) {
   return (
-    <div className="grid gap-4 border-t border-border/80 pt-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1.4fr)] lg:gap-10">
-      <h3 className="font-display text-h2 font-semibold tracking-tight text-foreground">
+    <div className="grid min-h-[9.5rem] gap-4 border-t border-border/80 pt-6 sm:min-h-[8.5rem] lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1.4fr)] lg:min-h-[7.5rem] lg:gap-10">
+      <h3
+        ref={titleRef}
+        className="font-display text-h2 font-semibold tracking-tight text-foreground"
+      >
         {title}
       </h3>
-      <p className="text-body leading-relaxed text-muted-foreground">{description}</p>
+      <p
+        ref={descriptionRef}
+        className="text-body leading-relaxed text-muted-foreground"
+      >
+        {description}
+      </p>
+    </div>
+  )
+}
+
+function WhyCardItem({
+  card,
+  snap,
+}: {
+  card: WhyCard
+  snap: boolean
+}) {
+  if (card.kind === 'stat') {
+    return (
+      <div
+        data-why-card
+        className={cn('shrink-0', snap && 'snap-center')}
+      >
+        <WhyStatCard card={card} />
+      </div>
+    )
+  }
+
+  return (
+    <div data-why-card className={cn('shrink-0', snap && 'snap-center')}>
+      <WhyVisualCard card={card} />
     </div>
   )
 }
 
 /**
- * @description Why Repairex horizontal showcase driven by GSAP ScrollTrigger.
+ * @description Why Repairex — pinned GSAP horizontal rail on desktop, native scroll on small screens.
  * @returns {JSX.Element} Why choose section.
  */
 export function WhyChooseSection() {
   const pinRef = useRef<HTMLDivElement>(null)
   const railRef = useRef<HTMLDivElement>(null)
+  const captionTitleRef = useRef<HTMLHeadingElement>(null)
+  const captionDescriptionRef = useRef<HTMLParagraphElement>(null)
+  const scrubCaptionIndexRef = useRef(0)
   const [activeIndex, setActiveIndex] = useState(0)
   const [useNativeRail, setUseNativeRail] = useState(() => {
     if (typeof window === 'undefined') {
-      return false
+      return true
     }
     return (
       window.matchMedia('(max-width: 1023px)').matches ||
@@ -189,12 +266,13 @@ export function WhyChooseSection() {
     const layoutMedia = window.matchMedia('(max-width: 1023px)')
 
     /**
-     * @description Syncs motion preference and mobile layout into React state.
+     * @description Uses native horizontal scroll below desktop or when motion is reduced.
      * @returns {void}
      */
     const sync = () => {
       setUseNativeRail(layoutMedia.matches || motionMedia.matches)
     }
+
     sync()
     motionMedia.addEventListener('change', sync)
     layoutMedia.addEventListener('change', sync)
@@ -205,16 +283,28 @@ export function WhyChooseSection() {
   }, [])
 
   /**
-   * @description Maps scrub progress to the active highlight card index.
-   * @param {number} progress - ScrollTrigger progress between 0 and 1.
+   * @description Updates caption copy from scrub progress without React re-renders (keeps GSAP transform smooth).
+   * @param {number} progress - Normalized horizontal scrub progress.
    * @returns {void}
    */
   const handleProgress = useCallback((progress: number) => {
+    const scaled = progress * Math.max(whyCards.length - 1, 1)
     const index = Math.min(
       whyCards.length - 1,
-      Math.max(0, Math.round(progress * (whyCards.length - 1))),
+      Math.max(0, Math.round(scaled)),
     )
-    setActiveIndex(index)
+    if (index === scrubCaptionIndexRef.current) {
+      return
+    }
+    scrubCaptionIndexRef.current = index
+    const card = whyCards[index] ?? whyCards[0]
+    const title = card.kind === 'stat' ? card.headline : card.title
+    if (captionTitleRef.current) {
+      captionTitleRef.current.textContent = title
+    }
+    if (captionDescriptionRef.current) {
+      captionDescriptionRef.current.textContent = card.description
+    }
   }, [])
 
   useGsapHorizontalScroll(pinRef, railRef, {
@@ -223,6 +313,33 @@ export function WhyChooseSection() {
     pinStartOffset: 72,
   })
 
+  /**
+   * @description Updates the caption from the native rail scroll position.
+   * @returns {void}
+   */
+  const syncActiveFromScroll = useCallback(() => {
+    const rail = railRef.current
+    if (!rail) {
+      return
+    }
+    const cards = rail.querySelectorAll<HTMLElement>('[data-why-card]')
+    if (cards.length === 0) {
+      return
+    }
+    const railCenter = rail.scrollLeft + rail.clientWidth / 2
+    let closest = 0
+    let closestDist = Number.POSITIVE_INFINITY
+    cards.forEach((node, index) => {
+      const center = node.offsetLeft + node.offsetWidth / 2
+      const dist = Math.abs(center - railCenter)
+      if (dist < closestDist) {
+        closestDist = dist
+        closest = index
+      }
+    })
+    setActiveIndex(closest)
+  }, [])
+
   const activeCard = whyCards[activeIndex] ?? whyCards[0]
   const activeTitle =
     activeCard.kind === 'stat' ? activeCard.headline : activeCard.title
@@ -230,70 +347,68 @@ export function WhyChooseSection() {
 
   return (
     <SectionSurface
+      id="why-repairex"
       tone="band"
       ariaLabel="Why choose Repairex"
       className="why-choose-section !overflow-visible !pb-0"
     >
-      <Container>
-        <SectionHeader
-          eyebrow="Why Repairex"
-          title="Built for clarity before you pay"
-          description="Repairex is designed for electronics repairs where surprise costs and unclear scope erode trust — compare estimates, approve quotes, and track progress in one workflow."
-        />
-        <Link
-          to="/about"
-          className="mt-6 inline-flex items-center gap-2 text-ui font-semibold text-foreground underline-offset-4 hover:text-primary hover:underline"
-        >
-          View the product
-          <ArrowRight aria-hidden className="size-4" />
-        </Link>
-      </Container>
-
-      {useNativeRail ? (
-        <Container className="pb-14 pt-10 sm:pb-16 lg:pb-20">
-          <div className="why-cinematic-rail -mx-1 flex snap-x snap-mandatory gap-5 overflow-x-auto overscroll-x-contain px-1 pb-4 sm:gap-6">
-            {whyCards.map((card) =>
-              card.kind === 'stat' ? (
-                <div key={card.key} className="snap-center shrink-0">
-                  <WhyStatCard card={card} />
-                </div>
-              ) : (
-                <div key={card.key} className="snap-center shrink-0">
-                  <WhyVisualCard card={card} />
-                </div>
-              ),
-            )}
-          </div>
-          <WhyCaption title={activeTitle} description={activeDescription} />
+      <div
+        ref={pinRef}
+        className={cn(
+          'relative flex flex-col justify-center py-8',
+          !useNativeRail && 'min-h-[calc(100dvh-4.5rem)]',
+        )}
+      >
+        <Container>
+          <SectionHeader
+            eyebrow="Why Repairex"
+            title="Built for clarity before you pay"
+            description="Repairex is designed for electronics repairs where surprise costs and unclear scope erode trust — compare estimates, approve quotes, and track progress in one workflow."
+          />
+          <Link
+            to="/about"
+            className="mt-6 inline-flex items-center gap-2 text-ui font-semibold text-foreground underline-offset-4 hover:text-primary hover:underline"
+          >
+            View the product
+            <ArrowRight aria-hidden className="size-4" />
+          </Link>
         </Container>
-      ) : (
         <div
-          ref={pinRef}
-          className="relative mt-8 sm:mt-10"
-          aria-label="Why Repairex highlights"
+          className={cn(
+            'mt-8 sm:mt-10',
+            useNativeRail ? 'overflow-visible' : 'overflow-x-clip',
+          )}
         >
-          <div className="flex min-h-[calc(100dvh-4rem)] flex-col justify-center py-8 sm:py-10">
-            <div className="overflow-x-clip">
-              <div
-                ref={railRef}
-                className="why-cinematic-rail flex w-max will-change-transform gap-5 pl-[max(1rem,calc((100vw-min(100vw-2rem,1280px))/2+1rem))] pr-8 sm:gap-6"
-              >
-                {whyCards.map((card) =>
-                  card.kind === 'stat' ? (
-                    <WhyStatCard key={card.key} card={card} />
-                  ) : (
-                    <WhyVisualCard key={card.key} card={card} />
-                  ),
-                )}
-              </div>
-            </div>
-
-            <Container className="mt-8 sm:mt-10">
-              <WhyCaption title={activeTitle} description={activeDescription} />
-            </Container>
+          <div
+            ref={railRef}
+            data-native-rail={useNativeRail ? 'true' : undefined}
+            className={cn(
+              'why-cinematic-rail flex items-stretch gap-5 sm:gap-6',
+              useNativeRail
+                ? '-mx-1 snap-x snap-mandatory overflow-x-auto overscroll-x-contain px-1 pb-4'
+                : 'w-max pr-[max(1.5rem,6vw)] pl-[max(1rem,calc((100vw-min(100vw-2rem,80rem))/2))] will-change-transform',
+            )}
+            onScroll={useNativeRail ? syncActiveFromScroll : undefined}
+            aria-label="Why Repairex highlights"
+          >
+            {whyCards.map((card) => (
+              <WhyCardItem
+                key={card.key}
+                card={card}
+                snap={useNativeRail}
+              />
+            ))}
           </div>
         </div>
-      )}
+        <Container className={cn('mt-8', useNativeRail && 'pb-6 sm:pb-8')}>
+          <WhyCaption
+            title={activeTitle}
+            description={activeDescription}
+            titleRef={useNativeRail ? undefined : captionTitleRef}
+            descriptionRef={useNativeRail ? undefined : captionDescriptionRef}
+          />
+        </Container>
+      </div>
     </SectionSurface>
   )
 }

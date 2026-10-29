@@ -27,6 +27,7 @@ import {
   type RepairItem,
 } from '@/features/repairs/api/repairsApi'
 import { getApiErrorMessage } from '@/lib/api-client'
+import { formatUsd } from '@/lib/format-money'
 import { cn } from '@/lib/utils'
 
 type RepairQuotationSectionProps = {
@@ -58,7 +59,11 @@ export function RepairQuotationSection({
 
   const isAssignedVendor =
     (userRole === 'vendor' && repair.assignedVendorId === userId) || userRole === 'admin'
-  const isCustomer = userRole === 'customer' || userRole === 'admin'
+  /** Matches POST /quotation/decision — customer role only, ticket owner. */
+  const canAuthorizeQuotation =
+    userRole === 'customer' &&
+    Boolean(userId) &&
+    repair.customerId === userId
 
   const { data: quotation, isLoading } = useQuery({
     queryKey: repairQuotationQueryKey(repair.id),
@@ -87,7 +92,8 @@ export function RepairQuotationSection({
     mutationFn: ({ decision, feedback }: { decision: 'approved' | 'rejected'; feedback?: string }) =>
       decideQuotationRequest(repair.id, { decision, feedback }),
     onSuccess: (data) => {
-      setSuccessMessage(data.message)
+      setErrorMessage(null)
+      setSuccessMessage(data.message ?? 'Quotation decision recorded.')
       setShowDeclineModal(false)
       void queryClient.invalidateQueries({ queryKey: repairDetailQueryKey(repair.id) })
       void queryClient.invalidateQueries({ queryKey: repairQuotationQueryKey(repair.id) })
@@ -443,7 +449,7 @@ export function RepairQuotationSection({
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {quotation.lineItems.map((item, i) => (
+                {(quotation.lineItems ?? []).map((item, i) => (
                   <tr key={i} className="hover:bg-secondary/10">
                     <td className="py-3 px-4">
                       <span
@@ -462,7 +468,7 @@ export function RepairQuotationSection({
                       {item.description}
                     </td>
                     <td className="py-3 px-4 text-right font-medium text-foreground">
-                      ${item.cost.toFixed(2)}
+                      {formatUsd(item.cost)}
                     </td>
                   </tr>
                 ))}
@@ -473,7 +479,7 @@ export function RepairQuotationSection({
                     Total Authorized Amount
                   </td>
                   <td className="py-3 px-4 text-right font-display text-h3 font-bold text-foreground">
-                    ${quotation.totalAmount.toFixed(2)}
+                    {formatUsd(quotation.totalAmount)}
                   </td>
                 </tr>
               </tfoot>
@@ -481,7 +487,16 @@ export function RepairQuotationSection({
           </div>
 
           {/* Customer Action Area (Pending Approval) */}
-          {quotation.status === 'pending' && isCustomer && (
+          {quotation.status === 'pending' &&
+            !canAuthorizeQuotation &&
+            userRole !== 'vendor' && (
+              <div className="rounded-lg border border-border bg-secondary/30 p-4 text-ui text-muted-foreground">
+                This quotation is awaiting approval from the customer who owns this repair
+                ticket.
+              </div>
+            )}
+
+          {quotation.status === 'pending' && canAuthorizeQuotation && (
             <div className="rounded-xl border border-primary/20 bg-primary/5 p-5">
               <div className="flex items-start gap-3">
                 <ShieldCheck className="mt-1 h-5 w-5 text-primary shrink-0" />
@@ -497,7 +512,11 @@ export function RepairQuotationSection({
 
               <div className="mt-5 flex flex-wrap items-center gap-3">
                 <Button
-                  onClick={() => decideMutation.mutate({ decision: 'approved' })}
+                  onClick={() => {
+                    setErrorMessage(null)
+                    setSuccessMessage(null)
+                    decideMutation.mutate({ decision: 'approved' })
+                  }}
                   disabled={decideMutation.isPending}
                   className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
                 >
@@ -506,7 +525,7 @@ export function RepairQuotationSection({
                   ) : (
                     <CheckCircle className="h-4 w-4" />
                   )}
-                  Approve & Authorize Repair (${quotation.totalAmount.toFixed(2)})
+                  Approve & Authorize Repair ({formatUsd(quotation.totalAmount)})
                 </Button>
 
                 <Button
@@ -566,7 +585,7 @@ export function RepairQuotationSection({
               <CheckCircle className="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
               <div>
                 <p className="font-semibold text-ui">
-                  Repair Authorized for ${quotation.totalAmount.toFixed(2)}
+                  Repair Authorized for {formatUsd(quotation.totalAmount)}
                 </p>
                 <p className="text-caption text-muted-foreground">
                   The quotation was approved
