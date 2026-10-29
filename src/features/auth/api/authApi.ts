@@ -47,6 +47,17 @@ export async function loginRequest(payload: LoginFormValues): Promise<AuthEnvelo
 }
 
 /**
+ * @description Authenticates using a Google Identity Services credential token.
+ * @async
+ * @param {string} credential - Google ID token.
+ * @returns {Promise<AuthEnvelope>}
+ */
+export async function googleSignInRequest(credential: string): Promise<AuthEnvelope> {
+  const { data } = await apiClient.post<AuthEnvelope>('/api/auth/google', { credential })
+  return data
+}
+
+/**
  * @description Verifies signup OTP and establishes session cookie.
  * @async
  * @param {object} payload - Email and OTP code.

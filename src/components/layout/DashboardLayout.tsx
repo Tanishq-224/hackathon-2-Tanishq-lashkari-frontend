@@ -1,22 +1,37 @@
-import { Link, Navigate, Outlet, useLocation } from 'react-router-dom'
+import { Link, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft,
   Home,
+  LogOut,
+  Moon,
   PlusCircle,
   Store,
+  Sun,
+  User,
   Wrench,
 } from 'lucide-react'
+import { useQueryClient } from '@tanstack/react-query'
 
-import { PublicNavbar } from './PublicNavbar'
-import { useAuthSession } from '@/hooks/useAuthSession'
+import { RepairexBrandMark } from './RepairexBrandMark'
+import { Button } from '@/components/ui/button'
+import { logoutRequest } from '@/features/auth/api/authApi'
+import {
+  authSessionQueryKey,
+  getProfileInitials,
+  useAuthSession,
+} from '@/hooks/useAuthSession'
+import { useTheme } from '@/providers/ThemeProvider'
 
 /**
- * @description Dedicated Dashboard Layout with common PublicNavbar, desktop sidebar, and mobile bottom nav.
+ * @description Dedicated Dashboard Layout with a full-width dedicated workspace header, desktop sidebar, and mobile nav.
  * @returns {JSX.Element}
  */
 export function DashboardLayout() {
   const { isAuthenticated, user, isLoading } = useAuthSession()
+  const { resolvedTheme, toggleTheme } = useTheme()
+  const queryClient = useQueryClient()
   const location = useLocation()
+  const navigate = useNavigate()
 
   if (isLoading) {
     return (
@@ -31,6 +46,17 @@ export function DashboardLayout() {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />
+  }
+
+  async function handleLogout() {
+    try {
+      await logoutRequest()
+    } catch {
+      // Best-effort logout
+    } finally {
+      await queryClient.invalidateQueries({ queryKey: authSessionQueryKey })
+      navigate('/login')
+    }
   }
 
   const isVendor = user?.role === 'vendor'
@@ -67,11 +93,81 @@ export function DashboardLayout() {
 
   return (
     <div className="flex min-h-dvh flex-col bg-background text-foreground">
-      {/* Common Navbar across public and dashboard */}
-      <PublicNavbar />
+      {/* Dedicated Dashboard Workspace Header */}
+      <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b border-border bg-card/95 px-4 backdrop-blur-md md:px-8">
+        {/* Brand & Workspace Mode */}
+        <div className="flex items-center gap-4 sm:gap-6">
+          <Link
+            to="/"
+            className="flex items-center gap-2.5 transition hover:opacity-90"
+            aria-label="Repairex Home"
+          >
+            <RepairexBrandMark className="size-8 sm:size-9" />
+            <span className="font-display text-lg font-bold tracking-tight text-foreground sm:inline-block">
+              Repairex
+            </span>
+          </Link>
+          <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-caption font-semibold uppercase tracking-wider text-primary">
+            {isVendor ? 'Vendor Portal' : 'Customer Workspace'}
+          </span>
+        </div>
 
-      {/* Main Body offset below fixed navbar */}
-      <div className="flex flex-1 pt-[4.75rem] sm:pt-24">
+        {/* Right Actions */}
+        <div className="flex items-center gap-3">
+          <Link
+            to="/"
+            className="hidden items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-caption font-medium text-muted-foreground transition hover:bg-secondary hover:text-foreground sm:flex"
+          >
+            <Home className="size-3.5" />
+            <span>Public Site</span>
+          </Link>
+
+          {/* Theme Toggle */}
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-secondary/50 text-foreground transition hover:bg-secondary"
+            aria-label="Toggle color theme"
+          >
+            {resolvedTheme === 'dark' ? (
+              <Sun className="h-4 w-4" />
+            ) : (
+              <Moon className="h-4 w-4" />
+            )}
+          </button>
+
+          {/* User Profile Pill */}
+          <div className="flex items-center gap-2.5 rounded-xl border border-border bg-secondary/40 px-3 py-1.5">
+            <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/20 text-xs font-bold text-primary">
+              {user ? getProfileInitials(user.fullName) : <User className="size-3.5" />}
+            </div>
+            <div className="hidden text-left sm:block">
+              <p className="max-w-[130px] truncate text-caption font-semibold leading-none text-foreground">
+                {user?.fullName}
+              </p>
+              <p className="max-w-[130px] truncate text-[11px] text-muted-foreground">
+                {user?.email}
+              </p>
+            </div>
+          </div>
+
+          {/* Logout Button */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              void handleLogout()
+            }}
+            className="flex items-center gap-1.5 text-ui font-medium"
+          >
+            <LogOut className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Logout</span>
+          </Button>
+        </div>
+      </header>
+
+      {/* Main Body */}
+      <div className="flex flex-1">
         {/* Desktop Sidebar (1024px+) */}
         <aside className="hidden w-64 shrink-0 flex-col justify-between border-r border-border bg-card/40 p-4 lg:flex">
           <div className="space-y-6">
