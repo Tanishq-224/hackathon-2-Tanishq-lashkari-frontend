@@ -22,7 +22,7 @@ export function readStoredTheme(): ThemePreference {
     return stored
   }
 
-  return 'system'
+  return 'dark'
 }
 
 /**

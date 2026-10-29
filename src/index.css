@@ -173,7 +173,7 @@
 
   html {
     @apply antialiased;
-    color-scheme: light;
+    color-scheme: dark;
   }
 
   html.lenis {

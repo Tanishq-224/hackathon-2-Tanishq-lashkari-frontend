@@ -9,10 +9,8 @@
       ;(function () {
         var key = 'repairex-theme'
         var stored = localStorage.getItem(key)
-        var prefersDark = window.matchMedia(
-          '(prefers-color-scheme: dark)',
-        ).matches
-        var useDark = stored === 'dark' || (stored !== 'light' && prefersDark)
+        // Default theme is dark — only go light if user explicitly chose it
+        var useDark = stored !== 'light'
         if (useDark) document.documentElement.classList.add('dark')
       })()
     </script>

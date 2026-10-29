@@ -41,11 +41,13 @@ describe('ThemeProvider', () => {
       </ThemeProvider>,
     )
 
-    expect(screen.getByTestId('resolved-theme')).toHaveTextContent('light')
+    // Default theme is now dark
+    expect(screen.getByTestId('resolved-theme')).toHaveTextContent('dark')
+    expect(document.documentElement.classList.contains('dark')).toBe(true)
 
     await user.click(screen.getByRole('button', { name: 'Toggle' }))
 
-    expect(screen.getByTestId('resolved-theme')).toHaveTextContent('dark')
-    expect(document.documentElement.classList.contains('dark')).toBe(true)
+    expect(screen.getByTestId('resolved-theme')).toHaveTextContent('light')
+    expect(document.documentElement.classList.contains('dark')).toBe(false)
   })
 })
