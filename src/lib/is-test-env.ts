@@ -2,10 +2,12 @@
  * @description Detects Jest / CI test runs where GSAP scroll effects should stay disabled.
  * @returns {boolean} True when running under the test environment.
  */
+type TestGlobal = typeof globalThis & { __REPAIREX_TEST__?: boolean }
+
 export function isTestEnv(): boolean {
-  if (typeof import.meta !== 'undefined' && import.meta.env?.MODE === 'test') {
+  if (typeof globalThis !== 'undefined' && (globalThis as TestGlobal).__REPAIREX_TEST__) {
     return true
   }
 
-  return process.env.NODE_ENV === 'test'
+  return import.meta.env?.MODE === 'test'
 }

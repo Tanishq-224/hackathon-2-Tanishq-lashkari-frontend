@@ -5,6 +5,7 @@ import '@testing-library/jest-dom'
 Object.assign(globalThis, {
   TextEncoder,
   TextDecoder,
+  __REPAIREX_TEST__: true,
 })
 
 Object.defineProperty(import.meta, 'env', {
