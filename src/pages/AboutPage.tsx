@@ -1,19 +1,25 @@
-import { Container } from '@/components/shared/Container'
+import { AboutEditorialClosingCta } from '@/features/about/components/editorial/AboutEditorialClosingCta'
+import { AboutEditorialHero } from '@/features/about/components/editorial/AboutEditorialHero'
+import { AboutEditorialMissionBand } from '@/features/about/components/editorial/AboutEditorialMissionBand'
+import { AboutEditorialPrinciples } from '@/features/about/components/editorial/AboutEditorialPrinciples'
+import { AboutEditorialStatsRows } from '@/features/about/components/editorial/AboutEditorialStatsRows'
+import { AboutEditorialVisionGrid } from '@/features/about/components/editorial/AboutEditorialVisionGrid'
+import { AboutEditorialWorkflowShowcase } from '@/features/about/components/editorial/AboutEditorialWorkflowShowcase'
 
 /**
- * @description About Us route placeholder for Phase 1 content sections.
- * @returns {JSX.Element} About page shell.
+ * @description About Us page — editorial layout (image slots for later).
+ * @returns {JSX.Element} Full Repairex about page.
  */
 export function AboutPage() {
   return (
-    <main className="flex-1 py-12 sm:py-16">
-      <Container>
-        <h1 className="text-h1 font-bold text-graphite">About Repairex</h1>
-        <p className="mt-4 max-w-2xl text-body text-slate-grey">
-          Full About Us sections will be implemented in Phase 1. Routing and
-          shared public layout are wired in Phase 0.
-        </p>
-      </Container>
+    <main className="about-editorial flex flex-1 flex-col bg-[#08090b]">
+      <AboutEditorialHero />
+      <AboutEditorialVisionGrid />
+      <AboutEditorialMissionBand />
+      <AboutEditorialStatsRows />
+      <AboutEditorialWorkflowShowcase />
+      <AboutEditorialPrinciples />
+      <AboutEditorialClosingCta />
     </main>
   )
 }

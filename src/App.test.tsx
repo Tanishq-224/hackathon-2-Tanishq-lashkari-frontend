@@ -29,19 +29,42 @@ function renderHomeRoute() {
 }
 
 describe('HomePage routing shell', () => {
-  it('renders the Repairex product title', () => {
+  it('renders the hero value proposition', async () => {
     renderHomeRoute()
 
     expect(
-      screen.getByRole('heading', { level: 1, name: /repairex/i }),
+      await screen.findByRole('heading', {
+        level: 1,
+        name: /compare repair options with/i,
+      }),
     ).toBeInTheDocument()
   })
 
-  it('shows Phase 0 setup status text', () => {
+  it('includes all eight brief-defined home sections', () => {
     renderHomeRoute()
 
     expect(
-      screen.getByText(/frontend foundation setup in progress/i),
+      screen.getByRole('region', { name: /supported device categories/i }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('region', { name: /common repair problems/i }),
+    ).toBeInTheDocument()
+    expect(document.getElementById('how-it-works')).toBeInTheDocument()
+    expect(
+      screen.getByRole('region', { name: /why choose repairex/i }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('region', { name: /for customers and vendors/i }),
+    ).toBeInTheDocument()
+    expect(document.getElementById('faq')).toBeInTheDocument()
+    expect(document.getElementById('get-started')).toBeInTheDocument()
+  })
+
+  it('renders a theme toggle in the public navbar', () => {
+    renderHomeRoute()
+
+    expect(
+      screen.getByRole('button', { name: /switch to (light|dark) theme/i }),
     ).toBeInTheDocument()
   })
 
@@ -53,5 +76,14 @@ describe('HomePage routing shell', () => {
       'href',
       '/about',
     )
+  })
+
+  it('shows log in entry point in the navbar', () => {
+    renderHomeRoute()
+
+    const header = screen.getByRole('banner')
+    expect(
+      within(header).getByRole('link', { name: /^log in$/i }),
+    ).toHaveAttribute('href', '/login')
   })
 })

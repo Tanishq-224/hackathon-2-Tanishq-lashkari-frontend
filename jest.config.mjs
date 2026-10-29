@@ -6,6 +6,7 @@ export default {
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
+    '\\.(png|jpe?g|gif|webp|svg)$': '<rootDir>/src/tests/fileMock.ts',
     '^@/(.*)$': '<rootDir>/src/$1',
   },
   transform: {

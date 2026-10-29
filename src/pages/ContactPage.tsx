@@ -1,19 +1,21 @@
-import { Container } from '@/components/shared/Container'
+import { ContactFaqSection } from '@/features/contact/components/ContactFaqSection'
+import { ContactFormSection } from '@/features/contact/components/ContactFormSection'
+import { ContactMapSection } from '@/features/contact/components/ContactMapSection'
+import { ContactHeroSection } from '@/features/contact/components/ContactHeroSection'
+import { ContactInfoSection } from '@/features/contact/components/ContactInfoSection'
 
 /**
- * @description Contact Us route placeholder until the functional form ships.
- * @returns {JSX.Element} Contact page shell.
+ * @description Contact Us page with hero, details, form, FAQs, and location map.
+ * @returns {JSX.Element} Full Repairex contact page.
  */
 export function ContactPage() {
   return (
-    <main className="flex-1 py-12 sm:py-16">
-      <Container>
-        <h1 className="text-h1 font-bold text-graphite">Contact us</h1>
-        <p className="mt-4 max-w-2xl text-body text-slate-grey">
-          Contact hero, verified details, and a backend-connected form arrive in
-          Phase 1. This route confirms navigation and layout wiring.
-        </p>
-      </Container>
+    <main className="flex flex-1 flex-col">
+      <ContactHeroSection />
+      <ContactInfoSection />
+      <ContactFormSection />
+      <ContactFaqSection />
+      <ContactMapSection />
     </main>
   )
 }
