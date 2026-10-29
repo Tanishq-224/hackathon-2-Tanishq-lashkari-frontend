@@ -24,6 +24,7 @@ import {
   type RepairStatus,
 } from '@/features/repairs/api/repairsApi'
 import { RepairEstimatesSection } from '@/features/repairs/components/RepairEstimatesSection'
+import { RepairQuotationSection } from '@/features/repairs/components/RepairQuotationSection'
 import { useAuthSession } from '@/hooks/useAuthSession'
 import { useQuery } from '@tanstack/react-query'
 
@@ -270,6 +271,13 @@ export function RepairDetailPage() {
 
           {/* Technician Estimates & Proposals */}
           <RepairEstimatesSection
+            repair={repair}
+            userRole={user?.role}
+            userId={user?.id}
+          />
+
+          {/* Physical Diagnosis & Itemized Quotation Approval */}
+          <RepairQuotationSection
             repair={repair}
             userRole={user?.role}
             userId={user?.id}

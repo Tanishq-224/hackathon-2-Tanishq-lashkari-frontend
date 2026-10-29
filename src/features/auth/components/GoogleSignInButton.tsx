@@ -138,16 +138,17 @@ export function GoogleSignInButton({
    * @description Fallback click handler when GIS button is not active or VITE_GOOGLE_CLIENT_ID is missing.
    */
   function handleFallbackClick() {
+    const originParam = typeof window !== 'undefined' ? `?origin=${encodeURIComponent(window.location.origin)}` : ''
     if (!googleClientId) {
       const apiBase = import.meta.env?.VITE_API_URL ?? 'http://localhost:5000'
-      window.location.href = `${apiBase}/api/auth/google`
+      window.location.href = `${apiBase}/api/auth/google${originParam}`
       return
     }
     try {
       window.google?.accounts.id.prompt()
     } catch {
       const apiBase = import.meta.env?.VITE_API_URL ?? 'http://localhost:5000'
-      window.location.href = `${apiBase}/api/auth/google`
+      window.location.href = `${apiBase}/api/auth/google${originParam}`
     }
   }
 

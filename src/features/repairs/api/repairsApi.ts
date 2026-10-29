@@ -55,6 +55,8 @@ export type RepairItem = {
   acceptedEstimateId?: string
   acceptedCostMin?: number
   acceptedCostMax?: number
+  quotationId?: string
+  finalApprovedAmount?: number
   createdAt: string
   updatedAt: string
 }
@@ -101,6 +103,43 @@ export const marketplaceFeedQueryKey = (filters?: { deviceType?: string; urgency
   ['marketplace', 'repairs', filters] as const
 export const repairEstimatesQueryKey = (repairId: string) =>
   ['repairs', repairId, 'estimates'] as const
+export const repairQuotationQueryKey = (repairId: string) =>
+  ['repairs', repairId, 'quotation'] as const
+
+export type LineItemCategory = 'parts' | 'labor' | 'consumable' | 'other'
+
+export type QuotationLineItem = {
+  description: string
+  category: LineItemCategory
+  cost: number
+}
+
+export type QuotationItem = {
+  id: string
+  repairRequestId: string
+  vendorId: string
+  vendorName: string
+  diagnosticFindings: string
+  lineItems: QuotationLineItem[]
+  totalAmount: number
+  estimatedCompletion: string
+  status: 'pending' | 'approved' | 'rejected'
+  customerDecisionAt?: string
+  customerFeedback?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type CreateQuotationPayload = {
+  diagnosticFindings: string
+  lineItems: QuotationLineItem[]
+  estimatedCompletion: string
+}
+
+export type QuotationDecisionPayload = {
+  decision: 'approved' | 'rejected'
+  feedback?: string
+}
 
 /**
  * @description Fetches all repair requests created by the current logged-in customer.
@@ -220,4 +259,49 @@ export async function selectEstimateRequest(
   }>(`/api/repairs/${repairId}/select-estimate`, { estimateId })
   return data.data
 }
+
+/**
+ * @description Fetches the itemized diagnostic quotation for a repair ticket.
+ * @async
+ */
+export async function fetchRepairQuotation(repairId: string): Promise<QuotationItem | null> {
+  const { data } = await apiClient.get<{
+    success: boolean
+    data: { quotation: QuotationItem | null }
+  }>(`/api/repairs/${repairId}/quotation`)
+  return data.data.quotation
+}
+
+/**
+ * @description Submits physical diagnostic findings and itemized line items by the assigned vendor.
+ * @async
+ */
+export async function submitDiagnosisRequest(
+  repairId: string,
+  payload: CreateQuotationPayload,
+): Promise<{ quotation: QuotationItem; repair: RepairItem }> {
+  const { data } = await apiClient.post<{
+    success: boolean
+    data: { quotation: QuotationItem; repair: RepairItem }
+    message: string
+  }>(`/api/repairs/${repairId}/diagnosis`, payload)
+  return data.data
+}
+
+/**
+ * @description Customer approves or rejects an itemized diagnostic quotation.
+ * @async
+ */
+export async function decideQuotationRequest(
+  repairId: string,
+  payload: QuotationDecisionPayload,
+): Promise<{ quotation: QuotationItem; repair: RepairItem; message: string }> {
+  const { data } = await apiClient.post<{
+    success: boolean
+    data: { quotation: QuotationItem; repair: RepairItem; message: string }
+    message: string
+  }>(`/api/repairs/${repairId}/quotation/decision`, payload)
+  return data.data
+}
+
 
