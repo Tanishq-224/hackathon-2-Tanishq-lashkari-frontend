@@ -1,5 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom'
 
+import { AuthLayout } from '@/components/layout/AuthLayout'
 import { PublicLayout } from '@/components/layout/PublicLayout'
 import { RouteScrollReset } from '@/components/layout/RouteScrollReset'
 import { AboutPage } from '@/pages/AboutPage'
@@ -30,7 +31,9 @@ export function createAppRouter() {
       element: (
         <>
           <RouteScrollReset />
-          <LoginPage />
+          <AuthLayout>
+            <LoginPage />
+          </AuthLayout>
         </>
       ),
     },
@@ -39,7 +42,9 @@ export function createAppRouter() {
       element: (
         <>
           <RouteScrollReset />
-          <SignupPage />
+          <AuthLayout>
+            <SignupPage />
+          </AuthLayout>
         </>
       ),
     },

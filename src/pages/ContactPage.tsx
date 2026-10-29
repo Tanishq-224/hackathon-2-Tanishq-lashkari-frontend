@@ -1,5 +1,6 @@
 import { ContactFaqSection } from '@/features/contact/components/ContactFaqSection'
 import { ContactFormSection } from '@/features/contact/components/ContactFormSection'
+import { ContactFinalCtaSection } from '@/features/contact/components/ContactFinalCtaSection'
 import { ContactMapSection } from '@/features/contact/components/ContactMapSection'
 import { ContactHeroSection } from '@/features/contact/components/ContactHeroSection'
 import { ContactInfoSection } from '@/features/contact/components/ContactInfoSection'
@@ -16,6 +17,7 @@ export function ContactPage() {
       <ContactFormSection />
       <ContactFaqSection />
       <ContactMapSection />
+      <ContactFinalCtaSection />
     </main>
   )
 }

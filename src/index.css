@@ -162,6 +162,7 @@
   --text-caption: 0.75rem;
   --text-caption--line-height: 1.45;
 
+  /* Brief breakpoints: 1024 / 768 / 600 / 480 — use Tailwind sm/md/lg + manual QA */
   --container-repairex: min(100% - 2rem, 1280px);
 }
 

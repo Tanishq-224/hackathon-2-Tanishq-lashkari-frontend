@@ -25,26 +25,23 @@ export function AboutEditorialPrinciples() {
       aria-label="Product principles"
       className="px-4 py-6 sm:px-6 lg:px-8"
     >
-      <AboutEditorialShell className="p-6 sm:p-8 lg:p-10">
+      <AboutEditorialShell tone="band" className="p-6 sm:p-8 lg:p-10">
         <div className="max-w-2xl">
           <p className="text-ui font-semibold tracking-[0.16em] text-primary uppercase">
             Principles
           </p>
-          <h2 className="mt-3 font-display text-h1 font-bold tracking-tight text-white">
+          <h2 className="mt-3 font-display text-h1 font-bold tracking-tight text-foreground">
             Built around clarity, consent, and follow-through
           </h2>
         </div>
 
         <div className="mt-8 grid gap-4 md:grid-cols-3">
           {principles.map(({ title, body }) => (
-            <article
-              key={title}
-              className="rounded-[1.25rem] border border-white/10 bg-white/[0.04] p-6"
-            >
-              <h3 className="font-display text-h3 font-semibold text-white">
+            <article key={title} className="theme-marketing-card rounded-[1.25rem] p-6">
+              <h3 className="font-display text-h3 font-semibold text-foreground">
                 {title}
               </h3>
-              <p className="mt-3 text-body leading-relaxed text-white/70">
+              <p className="mt-3 text-body leading-relaxed text-muted-foreground">
                 {body}
               </p>
             </article>

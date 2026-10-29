@@ -12,7 +12,7 @@ import { AboutEditorialWorkflowShowcase } from '@/features/about/components/edit
  */
 export function AboutPage() {
   return (
-    <main className="about-editorial flex flex-1 flex-col bg-[#08090b]">
+    <main className="flex flex-1 flex-col bg-background">
       <AboutEditorialHero />
       <AboutEditorialVisionGrid />
       <AboutEditorialMissionBand />

@@ -7,6 +7,13 @@ Object.assign(globalThis, {
   TextDecoder,
 })
 
+Object.defineProperty(import.meta, 'env', {
+  value: {
+    VITE_API_URL: 'http://localhost:5000',
+  },
+  writable: true,
+})
+
 class ResizeObserverMock {
   /**
    * @description Jest stub for ResizeObserver used by Lenis in public layout tests.

@@ -4,7 +4,7 @@ import axios, { type AxiosError } from 'axios'
  * @description Shared Axios instance for Repairex backend API calls.
  */
 export const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:5000',
+  baseURL: import.meta.env?.VITE_API_URL ?? 'http://localhost:5000',
   headers: {
     'Content-Type': 'application/json',
   },

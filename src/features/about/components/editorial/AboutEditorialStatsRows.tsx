@@ -25,16 +25,16 @@ export function AboutEditorialStatsRows() {
       aria-label="Repairex product structure highlights"
       className="px-4 py-6 sm:px-6 lg:px-8"
     >
-      <AboutEditorialShell tone="light" className="space-y-3 p-4 sm:p-5">
+      <AboutEditorialShell tone="band" className="space-y-3 p-4 sm:p-5">
         {stats.map(({ label, value }) => (
           <div
             key={label}
-            className="flex flex-col gap-3 rounded-[1.25rem] bg-white px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8 sm:py-6"
+            className="theme-marketing-card flex flex-col gap-3 rounded-[1.25rem] px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8 sm:py-6"
           >
-            <p className="max-w-xl text-body leading-relaxed text-[#141414]/75">
+            <p className="max-w-xl text-body leading-relaxed text-muted-foreground">
               {label}
             </p>
-            <p className="font-display text-[clamp(2.5rem,6vw,4rem)] leading-none font-bold tracking-tight text-[#141414]">
+            <p className="font-display text-[clamp(2.5rem,6vw,4rem)] leading-none font-bold tracking-tight text-foreground">
               {value}
             </p>
           </div>

@@ -6,7 +6,7 @@ import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
 /**
- * @description Dark closing CTA band for the About page.
+ * @description Warm closing CTA band for the About page (matches home accent sections).
  * @returns {JSX.Element} Final get-started section.
  */
 export function AboutEditorialClosingCta() {
@@ -19,16 +19,19 @@ export function AboutEditorialClosingCta() {
         <img
           src={aboutClosingBg}
           alt=""
-          className="absolute inset-0 size-full object-cover opacity-50"
+          className="absolute inset-0 size-full object-cover opacity-55"
           aria-hidden
         />
-        <div className="absolute inset-0 bg-[#0c0d10]/75" aria-hidden />
+        <div
+          className="absolute inset-0 bg-linear-to-t from-background/95 via-background/80 to-background/55"
+          aria-hidden
+        />
 
         <div className="relative z-10 flex min-h-[20rem] flex-col items-center justify-center px-6 py-14 text-center sm:px-10">
-          <h2 className="max-w-2xl font-display text-[clamp(1.75rem,4.5vw,3rem)] leading-tight font-bold tracking-tight text-white">
+          <h2 className="max-w-2xl font-display text-[clamp(1.75rem,4.5vw,3rem)] leading-tight font-bold tracking-tight text-foreground">
             Transparent repairs, structured for customers and vendors
           </h2>
-          <p className="mt-4 max-w-lg text-body-lg text-white/75">
+          <p className="mt-4 max-w-lg text-body-lg text-muted-foreground">
             Ready when you are — start a request or explore the home walkthrough.
           </p>
           <Link

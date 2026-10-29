@@ -2,7 +2,9 @@
 
 Smart electronics repair marketplace — customer and vendor UI.
 
-**Stack (Phase 0):** React 19, TypeScript, Vite 8, Tailwind CSS v4, ESLint, Prettier, Jest + React Testing Library, React Router, TanStack Query, Axios, React Hook Form + Zod, shadcn/ui (Button installed), Lucide React. Animation libraries (GSAP, Motion, Lenis) land in Phase 1.
+**Stack:** React 19, TypeScript, Vite 8, Tailwind CSS v4, ESLint, Prettier, Jest + React Testing Library, React Router, TanStack Query, Axios, React Hook Form + Zod, shadcn/ui, Lucide React, **GSAP + ScrollTrigger**, **Lenis** (public marketing pages).
+
+**Phase 1 (public site):** Home, About, and Contact on `PublicLayout`; auth routes use `AuthLayout` (forms ship in Phase 2). Responsive container max **1280px**; verify layouts at **1024 / 768 / 600 / 480** px when changing UI.
 
 ## Prerequisites
 
