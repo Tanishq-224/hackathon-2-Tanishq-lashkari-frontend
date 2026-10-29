@@ -2,7 +2,6 @@ import { ArrowRight, Laptop, Smartphone, Tablet, type LucideIcon } from 'lucide-
 import { Link } from 'react-router-dom'
 
 import { PageSection } from '@/components/shared/PageSection'
-import { ScrollFadeIn } from '@/components/shared/ScrollFadeIn'
 import { SectionHeader } from '@/components/shared/SectionHeader'
 import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -82,6 +81,7 @@ export function DeviceCategoriesSection() {
       tone="canvas"
       ariaLabel="Supported device categories"
       containerClassName="max-w-[88rem]"
+      scrollReveal={false}
     >
       <SectionHeader
         eyebrow="Devices we support"
@@ -89,18 +89,13 @@ export function DeviceCategoriesSection() {
         description="Repairex focuses on common consumer electronics. Request help only for supported categories so vendors can respond accurately."
       />
 
-      <ScrollFadeIn
-        as="ul"
-        className="theme-card-grid mt-10 grid grid-cols-1 divide-y divide-border md:grid-cols-3 md:divide-x md:divide-y-0"
-        delay={0.12}
-        stagger={0.1}
-      >
+      <ul className="theme-card-grid mt-10 grid grid-cols-1 divide-y divide-border md:grid-cols-3 md:divide-x md:divide-y-0">
         {categories.map((category) => (
           <li key={category.key} className="min-h-full">
             <DeviceCategoryCard category={category} />
           </li>
         ))}
-      </ScrollFadeIn>
+      </ul>
 
       <div className="mt-10">
         <Link

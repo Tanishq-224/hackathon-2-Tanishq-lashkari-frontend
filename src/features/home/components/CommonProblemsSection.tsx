@@ -1,7 +1,6 @@
 import { Battery, Cpu, PlugZap, Smartphone, type LucideIcon } from 'lucide-react'
 
 import { PageSection } from '@/components/shared/PageSection'
-import { ScrollFadeIn } from '@/components/shared/ScrollFadeIn'
 import { SectionHeader } from '@/components/shared/SectionHeader'
 import deviceLifestyle from '@/assets/devices/device-lifestyle.jpg'
 import devicePhone from '@/assets/devices/device-phone.jpg'
@@ -260,20 +259,16 @@ export function CommonProblemsSection() {
   const [screens, battery, charging, hardware] = problems
 
   return (
-    <PageSection tone="band" ariaLabel="Common repair problems">
+    <PageSection tone="band" ariaLabel="Common repair problems" scrollReveal={false}>
       <SectionHeader
         eyebrow="Common Issues"
         title="Problems we help you solve"
         description="Start with the symptom you see today. Vendors respond with preliminary estimates before any final repair quote."
       />
 
-      <ScrollFadeIn
-        className="mt-10 grid grid-cols-1 gap-4 lg:grid-cols-12 lg:grid-rows-2 lg:gap-5"
-        delay={0.14}
-        stagger={0.1}
-      >
+      <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-12 lg:grid-rows-2 lg:gap-5">
         <CommonIssuesFeatureTile
-          className="lg:col-span-5 lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:min-h-[520px]"
+          className="md:col-span-2 lg:col-span-5 lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:min-h-[520px]"
           title={screens.title}
           description={screens.description}
           imageSrc={screens.image}
@@ -304,7 +299,7 @@ export function CommonProblemsSection() {
           description="Get structured preliminary estimates before approving any final repair quote."
           icon={charging.icon}
         />
-      </ScrollFadeIn>
+      </div>
     </PageSection>
   )
 }

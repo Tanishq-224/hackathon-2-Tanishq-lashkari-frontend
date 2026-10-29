@@ -24,7 +24,7 @@ export function PublicLayout() {
   return (
     <LenisScrollProvider>
       <RouteScrollReset />
-      <div className="flex min-h-screen flex-col overflow-x-clip bg-background text-foreground">
+      <div className="flex min-h-screen flex-col bg-background text-foreground">
         <PublicNavbar />
         <div
           className={cn(

@@ -2,7 +2,6 @@ import { Mail, MapPin, Phone } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 import { Container } from '@/components/shared/Container'
-import { ScrollFadeIn } from '@/components/shared/ScrollFadeIn'
 import { useAuthSession } from '@/hooks/useAuthSession'
 import { SITE_CONTACT } from '@/lib/site-contact'
 import { cn } from '@/lib/utils'
@@ -206,7 +205,6 @@ export function PublicFooter() {
   return (
     <footer className="relative mt-auto overflow-hidden border-t border-border bg-background">
       <Container className="relative z-10 pt-12 pb-6 sm:pt-14">
-        <ScrollFadeIn delay={0.22} stagger={0.12}>
         <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.55fr)] lg:gap-16">
           <div className="max-w-md">
             <Link
@@ -228,7 +226,6 @@ export function PublicFooter() {
             <FooterContactColumn />
           </div>
         </div>
-        </ScrollFadeIn>
       </Container>
 
       <div

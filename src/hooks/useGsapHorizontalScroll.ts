@@ -2,6 +2,8 @@ import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useLayoutEffect, type RefObject } from 'react'
 
+import { getScrollTriggerScrollerProps } from '@/lib/gsap-scroll'
+
 gsap.registerPlugin(ScrollTrigger)
 
 type UseGsapHorizontalScrollOptions = {
@@ -54,13 +56,17 @@ export function useGsapHorizontalScroll(
       return -Math.max(0, travel)
     }
 
+    const scrollerProps = getScrollTriggerScrollerProps()
+
     const ctx = gsap.context(() => {
       const tween = gsap.to(railEl, {
         x: getScrollDistance,
         ease: 'none',
         scrollTrigger: {
+          ...scrollerProps,
           trigger: pinEl,
           start: `top top+=${pinStartOffset}`,
+          pinReparent: true,
           end: () => {
             const distance = Math.abs(getScrollDistance())
             return `+=${Math.max(distance * 1.05, window.innerHeight * 0.75)}`
@@ -104,6 +110,9 @@ export function useGsapHorizontalScroll(
     })
 
     refresh()
+    requestAnimationFrame(() => {
+      ScrollTrigger.refresh()
+    })
 
     return () => {
       window.removeEventListener('load', refresh)

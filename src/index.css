@@ -336,19 +336,15 @@
 
   .home-hero-viewport {
     position: relative;
-    left: 50%;
-    width: 100dvw;
-    max-width: 100dvw;
-    min-height: 100dvh;
-    transform: translateX(-50%);
+    width: 100%;
+    max-width: 100%;
+    min-height: min(100dvh, 920px);
   }
 
   .home-cta-viewport {
     position: relative;
-    left: 50%;
-    width: 100dvw;
-    max-width: 100dvw;
-    transform: translateX(-50%);
+    width: 100%;
+    max-width: 100%;
   }
 
   .footer-brand-watermark {

@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from 'react'
 
+import { getScrollTriggerScrollerProps } from '@/lib/gsap-scroll'
 import { isTestEnv } from '@/lib/is-test-env'
 import { cn } from '@/lib/utils'
 
@@ -33,6 +34,8 @@ export type ScrollFadeInProps = {
   stagger?: number
   once?: boolean
   disabled?: boolean
+  /** @description GSAP ScrollTrigger start string (e.g. `top top+=80` for hero). */
+  scrollTriggerStart?: string
 }
 
 /**
@@ -53,6 +56,7 @@ export function ScrollFadeIn({
   stagger = 0.12,
   once = true,
   disabled = false,
+  scrollTriggerStart = 'top 92%',
 }: ScrollFadeInProps) {
   const ref = useRef<HTMLElement>(null)
   const skipMotion = isTestEnv()
@@ -84,6 +88,8 @@ export function ScrollFadeIn({
 
     gsap.set(targets, { autoAlpha: 0, y: distance })
 
+    const scrollerProps = getScrollTriggerScrollerProps()
+
     const ctx = gsap.context(() => {
       gsap.to(targets, {
         autoAlpha: 1,
@@ -93,8 +99,9 @@ export function ScrollFadeIn({
         delay,
         stagger: useChildStagger ? stagger : undefined,
         scrollTrigger: {
+          ...scrollerProps,
           trigger: el,
-          start: 'top 92%',
+          start: scrollTriggerStart,
           once,
           invalidateOnRefresh: true,
         },
@@ -107,19 +114,21 @@ export function ScrollFadeIn({
     const revealIfVisible = () => {
       ScrollTrigger.refresh()
       const rect = el.getBoundingClientRect()
-      if (rect.top < window.innerHeight * (1 - threshold)) {
+      if (rect.top < window.innerHeight * (1 - threshold) && rect.bottom > 0) {
         gsap.to(targets, {
           autoAlpha: 1,
           y: 0,
           duration: Math.min(duration, 0.45),
           ease,
-          stagger: useChildStagger ? stagger * 0.5 : undefined,
-          overwrite: true,
+          delay: 0,
+          stagger: useChildStagger ? Math.min(stagger, 0.05) : undefined,
+          overwrite: 'auto',
         })
       }
     }
 
     revealIfVisible()
+    requestAnimationFrame(revealIfVisible)
     window.addEventListener('load', revealIfVisible)
 
     return () => {
@@ -134,6 +143,7 @@ export function ScrollFadeIn({
     ease,
     skipMotion,
     once,
+    scrollTriggerStart,
     stagger,
     threshold,
   ])

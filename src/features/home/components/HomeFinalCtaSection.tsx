@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom'
 
 import ctaFactoryBackground from '@/assets/cta-factory-background.jpg'
 import { Container } from '@/components/shared/Container'
-import { ScrollFadeIn } from '@/components/shared/ScrollFadeIn'
 import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -33,7 +32,6 @@ export function HomeFinalCtaSection() {
 
       <div className="relative z-10 border-y border-white/15 bg-black/10 py-14 backdrop-blur-sm sm:py-16 lg:py-20">
         <Container className="text-center">
-          <ScrollFadeIn distance={32} duration={0.8} delay={0.22} stagger={0.11}>
           <h2 className="font-display text-h1 font-bold tracking-tight text-white drop-shadow-md">
             Ready to start your repair request?
           </h2>
@@ -67,7 +65,6 @@ export function HomeFinalCtaSection() {
               Learn about Repairex
             </Link>
           </div>
-          </ScrollFadeIn>
         </Container>
       </div>
     </section>

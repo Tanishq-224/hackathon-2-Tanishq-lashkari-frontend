@@ -6,7 +6,6 @@ import deviceLaptopWork from '@/assets/devices/device-laptop-work.png'
 import deviceLifestyle from '@/assets/devices/device-lifestyle.jpg'
 import devicePhone from '@/assets/devices/device-phone.jpg'
 import { Container } from '@/components/shared/Container'
-import { ScrollFadeIn } from '@/components/shared/ScrollFadeIn'
 import { SectionHeader } from '@/components/shared/SectionHeader'
 import { SectionSurface } from '@/components/shared/SectionSurface'
 import { useGsapHorizontalScroll } from '@/hooks/useGsapHorizontalScroll'
@@ -213,6 +212,7 @@ export function WhyChooseSection() {
   useGsapHorizontalScroll(pinRef, railRef, {
     enabled: !useNativeRail,
     onProgress: handleProgress,
+    pinStartOffset: 72,
   })
 
   const activeCard = whyCards[activeIndex] ?? whyCards[0]
@@ -221,22 +221,24 @@ export function WhyChooseSection() {
   const activeDescription = activeCard.description
 
   return (
-    <SectionSurface tone="band" ariaLabel="Why choose Repairex" className="!pb-0">
+    <SectionSurface
+      tone="band"
+      ariaLabel="Why choose Repairex"
+      className="!overflow-visible !pb-0"
+    >
       <Container>
-        <ScrollFadeIn delay={0.2} stagger={0.12}>
-          <SectionHeader
-            eyebrow="Why Repairex"
-            title="Built for clarity before you pay"
-            description="Repairex is designed for electronics repairs where surprise costs and unclear scope erode trust — compare estimates, approve quotes, and track progress in one workflow."
-          />
-          <Link
-            to="/about"
-            className="mt-6 inline-flex items-center gap-2 text-ui font-semibold text-foreground underline-offset-4 hover:text-primary hover:underline"
-          >
-            View the product
-            <ArrowRight aria-hidden className="size-4" />
-          </Link>
-        </ScrollFadeIn>
+        <SectionHeader
+          eyebrow="Why Repairex"
+          title="Built for clarity before you pay"
+          description="Repairex is designed for electronics repairs where surprise costs and unclear scope erode trust — compare estimates, approve quotes, and track progress in one workflow."
+        />
+        <Link
+          to="/about"
+          className="mt-6 inline-flex items-center gap-2 text-ui font-semibold text-foreground underline-offset-4 hover:text-primary hover:underline"
+        >
+          View the product
+          <ArrowRight aria-hidden className="size-4" />
+        </Link>
       </Container>
 
       {useNativeRail ? (
@@ -259,21 +261,23 @@ export function WhyChooseSection() {
       ) : (
         <div
           ref={pinRef}
-          className="relative mt-8 overflow-hidden sm:mt-10"
+          className="relative mt-8 sm:mt-10"
           aria-label="Why Repairex highlights"
         >
           <div className="flex min-h-[calc(100dvh-4rem)] flex-col justify-center py-8 sm:py-10">
-            <div
-              ref={railRef}
-              className="why-cinematic-rail flex w-max will-change-transform gap-5 pl-[max(1rem,calc((100vw-min(100vw-2rem,1280px))/2+1rem))] pr-8 sm:gap-6"
-            >
-              {whyCards.map((card) =>
-                card.kind === 'stat' ? (
-                  <WhyStatCard key={card.key} card={card} />
-                ) : (
-                  <WhyVisualCard key={card.key} card={card} />
-                ),
-              )}
+            <div className="overflow-x-clip">
+              <div
+                ref={railRef}
+                className="why-cinematic-rail flex w-max will-change-transform gap-5 pl-[max(1rem,calc((100vw-min(100vw-2rem,1280px))/2+1rem))] pr-8 sm:gap-6"
+              >
+                {whyCards.map((card) =>
+                  card.kind === 'stat' ? (
+                    <WhyStatCard key={card.key} card={card} />
+                  ) : (
+                    <WhyVisualCard key={card.key} card={card} />
+                  ),
+                )}
+              </div>
             </div>
 
             <Container className="mt-8 sm:mt-10">

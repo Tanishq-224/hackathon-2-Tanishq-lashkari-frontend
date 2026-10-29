@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom'
 import { Store, UserRound } from 'lucide-react'
 
 import { PageSection } from '@/components/shared/PageSection'
-import { ScrollFadeIn } from '@/components/shared/ScrollFadeIn'
 import { SectionHeader } from '@/components/shared/SectionHeader'
 import { buttonVariants } from '@/components/ui/button'
 import {
@@ -20,17 +19,13 @@ import {
  */
 export function AudienceSection() {
   return (
-    <PageSection tone="canvas" ariaLabel="For customers and vendors">
+    <PageSection tone="canvas" ariaLabel="For customers and vendors" scrollReveal={false}>
       <SectionHeader
         eyebrow="Two sides, one workflow"
         title="For customers and vendors"
         description="Customers get visibility and control. Vendors get qualified requests and a structured path from estimate to approved repair."
       />
-      <ScrollFadeIn
-        className="mt-10 grid gap-6 lg:grid-cols-2"
-        delay={0.12}
-        stagger={0.11}
-      >
+      <div className="mt-10 grid gap-6 lg:grid-cols-2">
         <Card className="h-full">
           <CardHeader>
             <div className="mb-2 flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
@@ -82,7 +77,7 @@ export function AudienceSection() {
             </Link>
           </CardFooter>
         </Card>
-      </ScrollFadeIn>
+      </div>
     </PageSection>
   )
 }

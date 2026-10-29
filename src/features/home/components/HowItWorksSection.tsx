@@ -1,6 +1,5 @@
 import { MarketingPanel } from '@/components/shared/MarketingPanel'
 import { PageSection } from '@/components/shared/PageSection'
-import { ScrollFadeIn } from '@/components/shared/ScrollFadeIn'
 import { SectionHeader } from '@/components/shared/SectionHeader'
 import { REPAIR_WORKFLOW_STEPS } from '@/content/repair-workflow-steps'
 
@@ -10,18 +9,18 @@ import { REPAIR_WORKFLOW_STEPS } from '@/content/repair-workflow-steps'
  */
 export function HowItWorksSection() {
   return (
-    <PageSection id="how-it-works" tone="canvas" ariaLabel="How Repairex works">
+    <PageSection
+      id="how-it-works"
+      tone="canvas"
+      ariaLabel="How Repairex works"
+      scrollReveal={false}
+    >
       <SectionHeader
         eyebrow="Workflow"
         title="How Repairex works"
         description="From first request to completed repair, every step is structured so you stay informed before approving costs."
       />
-      <ScrollFadeIn
-        as="ol"
-        className="mt-10 grid gap-4 lg:grid-cols-5"
-        delay={0.12}
-        stagger={0.09}
-      >
+      <ol className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {REPAIR_WORKFLOW_STEPS.map(({ step, title, description }) => (
           <li key={step}>
             <MarketingPanel className="flex h-full flex-col p-5">
@@ -35,7 +34,7 @@ export function HowItWorksSection() {
             </MarketingPanel>
           </li>
         ))}
-      </ScrollFadeIn>
+      </ol>
     </PageSection>
   )
 }

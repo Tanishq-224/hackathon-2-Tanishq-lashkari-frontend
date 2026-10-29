@@ -38,8 +38,9 @@ export function HomeFaqSection() {
       id="faq"
       tone="canvas"
       ariaLabel="Frequently asked questions"
-      revealClassName="grid gap-12 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:gap-16 xl:gap-24"
+      scrollReveal={false}
     >
+      <div className="grid gap-12 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:gap-16 xl:gap-24">
       <div className="max-w-md lg:sticky lg:top-28 lg:self-start">
         <h2 className="font-display text-h1 font-bold tracking-tight text-foreground">
           Frequently asked questions
@@ -55,6 +56,7 @@ export function HomeFaqSection() {
         defaultOpenId="faq-estimates"
         className="lg:pt-1"
       />
+      </div>
     </PageSection>
   )
 }

@@ -91,6 +91,9 @@ export function LenisScrollProvider({ children }: LenisScrollProviderProps) {
 
     window.addEventListener('load', onWindowLoad)
     ScrollTrigger.refresh()
+    requestAnimationFrame(() => {
+      ScrollTrigger.refresh()
+    })
 
     return () => {
       window.removeEventListener('load', onWindowLoad)
