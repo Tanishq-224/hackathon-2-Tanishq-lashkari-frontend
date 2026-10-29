@@ -14,6 +14,7 @@ import { NotFoundPage } from '@/pages/NotFoundPage'
 import { RepairDetailPage } from '@/pages/RepairDetailPage'
 import { ResetPasswordPage } from '@/pages/ResetPasswordPage'
 import { SignupPage } from '@/pages/SignupPage'
+import { VendorMarketplacePage } from '@/pages/VendorMarketplacePage'
 import { VerifyOtpPage } from '@/pages/VerifyOtpPage'
 
 /**
@@ -47,6 +48,7 @@ export function createAppRouter() {
       ),
       children: [
         { index: true, element: <CustomerDashboardPage /> },
+        { path: 'marketplace', element: <VendorMarketplacePage /> },
         { path: 'new-repair', element: <NewRepairRequestPage /> },
         { path: 'repairs/:id', element: <RepairDetailPage /> },
       ],

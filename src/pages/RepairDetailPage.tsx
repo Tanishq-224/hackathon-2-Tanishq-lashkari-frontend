@@ -23,6 +23,8 @@ import {
   type DeviceType,
   type RepairStatus,
 } from '@/features/repairs/api/repairsApi'
+import { RepairEstimatesSection } from '@/features/repairs/components/RepairEstimatesSection'
+import { useAuthSession } from '@/hooks/useAuthSession'
 import { useQuery } from '@tanstack/react-query'
 
 const WORKFLOW_STEPS: { status: RepairStatus; label: string }[] = [
@@ -79,6 +81,7 @@ function getDeviceIcon(type: DeviceType) {
 export function RepairDetailPage() {
   const { id } = useParams<{ id: string }>()
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
+  const { user } = useAuthSession()
 
   const {
     data: repair,
@@ -264,6 +267,13 @@ export function RepairDetailPage() {
               </div>
             </div>
           )}
+
+          {/* Technician Estimates & Proposals */}
+          <RepairEstimatesSection
+            repair={repair}
+            userRole={user?.role}
+            userId={user?.id}
+          />
         </div>
 
         {/* Right Sidebar: What Happens Next */}

@@ -3,6 +3,7 @@ import {
   ArrowLeft,
   Home,
   PlusCircle,
+  Store,
   Wrench,
 } from 'lucide-react'
 
@@ -14,7 +15,7 @@ import { useAuthSession } from '@/hooks/useAuthSession'
  * @returns {JSX.Element}
  */
 export function DashboardLayout() {
-  const { isAuthenticated, isLoading } = useAuthSession()
+  const { isAuthenticated, user, isLoading } = useAuthSession()
   const location = useLocation()
 
   if (isLoading) {
@@ -32,20 +33,37 @@ export function DashboardLayout() {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />
   }
 
-  const navItems = [
-    {
-      label: 'My Repairs',
-      to: '/dashboard',
-      icon: Wrench,
-      active: location.pathname === '/dashboard',
-    },
-    {
-      label: 'New Request',
-      to: '/dashboard/new-repair',
-      icon: PlusCircle,
-      active: location.pathname === '/dashboard/new-repair',
-    },
-  ]
+  const isVendor = user?.role === 'vendor'
+
+  const navItems = isVendor
+    ? [
+        {
+          label: 'Marketplace Feed',
+          to: '/dashboard/marketplace',
+          icon: Store,
+          active: location.pathname === '/dashboard/marketplace',
+        },
+        {
+          label: 'My Active Repairs',
+          to: '/dashboard',
+          icon: Wrench,
+          active: location.pathname === '/dashboard',
+        },
+      ]
+    : [
+        {
+          label: 'My Repairs',
+          to: '/dashboard',
+          icon: Wrench,
+          active: location.pathname === '/dashboard',
+        },
+        {
+          label: 'New Request',
+          to: '/dashboard/new-repair',
+          icon: PlusCircle,
+          active: location.pathname === '/dashboard/new-repair',
+        },
+      ]
 
   return (
     <div className="flex min-h-dvh flex-col bg-background text-foreground">
@@ -105,29 +123,59 @@ export function DashboardLayout() {
         className="fixed bottom-0 left-0 right-0 z-40 flex h-16 items-center justify-around border-t border-border bg-card/95 px-2 backdrop-blur-md lg:hidden"
         aria-label="Mobile Navigation"
       >
-        <Link
-          to="/dashboard"
-          className={`flex flex-col items-center gap-1 py-1 text-[11px] font-medium transition ${
-            location.pathname === '/dashboard'
-              ? 'text-primary'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          <Wrench className="h-5 w-5" />
-          <span>Repairs</span>
-        </Link>
+        {isVendor ? (
+          <>
+            <Link
+              to="/dashboard/marketplace"
+              className={`flex flex-col items-center gap-1 py-1 text-[11px] font-medium transition ${
+                location.pathname === '/dashboard/marketplace'
+                  ? 'text-primary'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Store className="h-5 w-5" />
+              <span>Marketplace</span>
+            </Link>
 
-        <Link
-          to="/dashboard/new-repair"
-          className={`flex flex-col items-center gap-1 py-1 text-[11px] font-medium transition ${
-            location.pathname === '/dashboard/new-repair'
-              ? 'text-primary'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          <PlusCircle className="h-5 w-5" />
-          <span>New</span>
-        </Link>
+            <Link
+              to="/dashboard"
+              className={`flex flex-col items-center gap-1 py-1 text-[11px] font-medium transition ${
+                location.pathname === '/dashboard'
+                  ? 'text-primary'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Wrench className="h-5 w-5" />
+              <span>Active</span>
+            </Link>
+          </>
+        ) : (
+          <>
+            <Link
+              to="/dashboard"
+              className={`flex flex-col items-center gap-1 py-1 text-[11px] font-medium transition ${
+                location.pathname === '/dashboard'
+                  ? 'text-primary'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Wrench className="h-5 w-5" />
+              <span>Repairs</span>
+            </Link>
+
+            <Link
+              to="/dashboard/new-repair"
+              className={`flex flex-col items-center gap-1 py-1 text-[11px] font-medium transition ${
+                location.pathname === '/dashboard/new-repair'
+                  ? 'text-primary'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <PlusCircle className="h-5 w-5" />
+              <span>New</span>
+            </Link>
+          </>
+        )}
 
         <Link
           to="/"

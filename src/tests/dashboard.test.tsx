@@ -2,11 +2,19 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
-import { customerRepairsQueryKey } from '@/features/repairs/api/repairsApi'
+import {
+  customerRepairsQueryKey,
+  marketplaceFeedQueryKey,
+} from '@/features/repairs/api/repairsApi'
 import { CustomerDashboardPage } from '@/pages/CustomerDashboardPage'
 import { NewRepairRequestPage } from '@/pages/NewRepairRequestPage'
+import { VendorMarketplacePage } from '@/pages/VendorMarketplacePage'
 
-function renderWithProviders(ui: React.ReactElement, initialRepairs = []) {
+function renderWithProviders(
+  ui: React.ReactElement,
+  initialRepairs = [],
+  initialMarketplace = [],
+) {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
@@ -17,6 +25,7 @@ function renderWithProviders(ui: React.ReactElement, initialRepairs = []) {
 
   // Seed cache so components render immediately
   queryClient.setQueryData(customerRepairsQueryKey, initialRepairs)
+  queryClient.setQueryData(marketplaceFeedQueryKey({}), initialMarketplace)
 
   return render(
     <QueryClientProvider client={queryClient}>
@@ -53,5 +62,18 @@ describe('Phase 3 Customer Repairs UI', () => {
     expect(
       screen.getByRole('button', { name: /Submit Request/i }),
     ).toBeInTheDocument()
+  })
+
+  it('renders Vendor Marketplace feed with categories and empty state', () => {
+    renderWithProviders(<VendorMarketplacePage />, [], [])
+
+    expect(
+      screen.getByRole('heading', { level: 1, name: /Open Repair Requests/i }),
+    ).toBeInTheDocument()
+    expect(screen.getByText(/Vendor Marketplace/i)).toBeInTheDocument()
+    expect(screen.getByText(/All Devices/i)).toBeInTheDocument()
+    expect(screen.getByText(/Phones/i)).toBeInTheDocument()
+    expect(screen.getByText(/Laptops/i)).toBeInTheDocument()
+    expect(screen.getByText(/No Open Repair Requests/i)).toBeInTheDocument()
   })
 })

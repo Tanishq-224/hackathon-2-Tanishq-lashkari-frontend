@@ -50,8 +50,37 @@ export type RepairItem = {
   status: RepairStatus
   estimatedBudgetMin?: number
   estimatedBudgetMax?: number
+  assignedVendorId?: string
+  assignedVendorName?: string
+  acceptedEstimateId?: string
+  acceptedCostMin?: number
+  acceptedCostMax?: number
   createdAt: string
   updatedAt: string
+}
+
+export type EstimateItem = {
+  id: string
+  repairRequestId: string
+  vendorId: string
+  vendorName: string
+  vendorEmail: string
+  minCost: number
+  maxCost: number
+  turnaroundTime: string
+  warrantyMonths: number
+  notes: string
+  status: 'pending' | 'accepted' | 'declined'
+  createdAt: string
+  updatedAt: string
+}
+
+export type SubmitEstimatePayload = {
+  minCost: number
+  maxCost: number
+  turnaroundTime: string
+  warrantyMonths: number
+  notes: string
 }
 
 export type CreateRepairPayload = {
@@ -68,6 +97,10 @@ export type CreateRepairPayload = {
 
 export const customerRepairsQueryKey = ['repairs', 'customer'] as const
 export const repairDetailQueryKey = (id: string) => ['repairs', 'detail', id] as const
+export const marketplaceFeedQueryKey = (filters?: { deviceType?: string; urgency?: string }) =>
+  ['marketplace', 'repairs', filters] as const
+export const repairEstimatesQueryKey = (repairId: string) =>
+  ['repairs', repairId, 'estimates'] as const
 
 /**
  * @description Fetches all repair requests created by the current logged-in customer.
@@ -126,6 +159,65 @@ export async function uploadRepairImage(
     success: boolean
     data: ImageAttachment
   }>('/api/repairs/upload-image', { imageData })
+  return data.data
+}
+
+/**
+ * @description Fetches all open repair requests available in the vendor marketplace feed.
+ * @async
+ */
+export async function fetchMarketplaceFeed(filters?: {
+  deviceType?: string
+  urgency?: string
+}): Promise<RepairItem[]> {
+  const { data } = await apiClient.get<{
+    success: boolean
+    data: { requests: RepairItem[] }
+  }>('/api/marketplace/repairs', { params: filters })
+  return data.data.requests
+}
+
+/**
+ * @description Fetches all estimates submitted for a specific repair request.
+ * @async
+ */
+export async function fetchRepairEstimates(repairId: string): Promise<EstimateItem[]> {
+  const { data } = await apiClient.get<{
+    success: boolean
+    data: { estimates: EstimateItem[] }
+  }>(`/api/repairs/${repairId}/estimates`)
+  return data.data.estimates
+}
+
+/**
+ * @description Submits a preliminary vendor estimate for an open repair request.
+ * @async
+ */
+export async function submitEstimateRequest(
+  repairId: string,
+  payload: SubmitEstimatePayload,
+): Promise<EstimateItem> {
+  const { data } = await apiClient.post<{
+    success: boolean
+    data: { estimate: EstimateItem }
+    message: string
+  }>(`/api/repairs/${repairId}/estimates`, payload)
+  return data.data.estimate
+}
+
+/**
+ * @description Customer selects and accepts a vendor estimate.
+ * @async
+ */
+export async function selectEstimateRequest(
+  repairId: string,
+  estimateId: string,
+): Promise<{ repair: RepairItem; acceptedEstimate: EstimateItem }> {
+  const { data } = await apiClient.post<{
+    success: boolean
+    data: { repair: RepairItem; acceptedEstimate: EstimateItem }
+    message: string
+  }>(`/api/repairs/${repairId}/select-estimate`, { estimateId })
   return data.data
 }
 

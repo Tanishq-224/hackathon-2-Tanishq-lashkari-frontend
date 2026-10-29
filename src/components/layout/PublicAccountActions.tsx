@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, LogOut, PlusCircle } from 'lucide-react'
+import { LayoutDashboard, LogOut, PlusCircle, Store } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 
 import { buttonVariants } from '@/components/ui/button'
@@ -133,15 +133,27 @@ export function PublicAccountActions({
                 <LayoutDashboard className="size-4 text-muted-foreground" />
                 <span>Dashboard</span>
               </Link>
-              <Link
-                to="/dashboard/new-repair"
-                onClick={() => setOpen(false)}
-                className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-ui font-medium text-foreground transition hover:bg-secondary"
-                role="menuitem"
-              >
-                <PlusCircle className="size-4 text-muted-foreground" />
-                <span>New Repair Request</span>
-              </Link>
+              {user.role === 'vendor' ? (
+                <Link
+                  to="/dashboard/marketplace"
+                  onClick={() => setOpen(false)}
+                  className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-ui font-medium text-foreground transition hover:bg-secondary"
+                  role="menuitem"
+                >
+                  <Store className="size-4 text-muted-foreground" />
+                  <span>Vendor Marketplace</span>
+                </Link>
+              ) : (
+                <Link
+                  to="/dashboard/new-repair"
+                  onClick={() => setOpen(false)}
+                  className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-ui font-medium text-foreground transition hover:bg-secondary"
+                  role="menuitem"
+                >
+                  <PlusCircle className="size-4 text-muted-foreground" />
+                  <span>New Repair Request</span>
+                </Link>
+              )}
             </div>
 
             {/* Logout button */}
