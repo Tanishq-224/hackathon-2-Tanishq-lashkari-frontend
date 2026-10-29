@@ -18,10 +18,12 @@ import {
 import { buttonVariants } from '@/components/ui/button'
 import {
   customerRepairsQueryKey,
-  fetchCustomerRepairs,
+  fetchMyRepairRequests,
+  vendorRepairsQueryKey,
   type DeviceType,
   type RepairStatus,
 } from '@/features/repairs/api/repairsApi'
+import { useAuthSession } from '@/hooks/useAuthSession'
 import { useQuery } from '@tanstack/react-query'
 
 function getDeviceIcon(type: DeviceType) {
@@ -98,10 +100,13 @@ function getStatusBadge(status: RepairStatus) {
 
 export function CustomerDashboardPage() {
   const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all')
+  const { user } = useAuthSession()
+  const isVendor = user?.role === 'vendor'
 
   const { data: repairs = [], isLoading, error } = useQuery({
-    queryKey: customerRepairsQueryKey,
-    queryFn: fetchCustomerRepairs,
+    queryKey: isVendor ? vendorRepairsQueryKey : customerRepairsQueryKey,
+    queryFn: fetchMyRepairRequests,
+    enabled: Boolean(user),
   })
 
   const activeRepairs = repairs.filter(
@@ -145,20 +150,24 @@ export function CustomerDashboardPage() {
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <h1 className="font-display text-h2 font-bold tracking-tight text-foreground">
-            Repair Requests
+            {isVendor ? 'Assigned Repairs' : 'Repair Requests'}
           </h1>
           <p className="text-ui text-muted-foreground">
-            Manage your electronics repair tickets, estimates, and repair progress.
+            {isVendor
+              ? 'Tickets where you were selected — run diagnosis, quotations, and repair work.'
+              : 'Manage your electronics repair tickets, estimates, and repair progress.'}
           </p>
         </div>
 
-        <Link
-          to="/dashboard/new-repair"
-          className={buttonVariants({ className: 'gap-2 shadow-sm' })}
-        >
-          <PlusCircle className="h-4 w-4" />
-          <span>New Repair Request</span>
-        </Link>
+        {!isVendor && (
+          <Link
+            to="/dashboard/new-repair"
+            className={buttonVariants({ className: 'gap-2 shadow-sm' })}
+          >
+            <PlusCircle className="h-4 w-4" />
+            <span>New Repair Request</span>
+          </Link>
+        )}
       </div>
 
       {/* KPI Summary Cards */}
@@ -225,14 +234,20 @@ export function CustomerDashboardPage() {
             <Wrench className="h-7 w-7" />
           </div>
           <h3 className="mt-4 font-display text-h3 font-semibold text-foreground">
-            {filter === 'all'
-              ? 'No repair requests submitted yet'
-              : `No ${filter} requests`}
+            {isVendor
+              ? filter === 'all'
+                ? 'No assigned repairs yet'
+                : `No ${filter} assigned jobs`
+              : filter === 'all'
+                ? 'No repair requests submitted yet'
+                : `No ${filter} requests`}
           </h3>
           <p className="mt-1.5 max-w-sm text-ui text-muted-foreground">
-            Submit a device repair ticket with issue photos to compare quotes from certified repair specialists.
+            {isVendor
+              ? 'When a customer accepts your marketplace estimate, the ticket appears here for diagnosis and repair.'
+              : 'Submit a device repair ticket with issue photos to compare quotes from certified repair specialists.'}
           </p>
-          {filter === 'all' && (
+          {!isVendor && filter === 'all' && (
             <Link
               to="/dashboard/new-repair"
               className={buttonVariants({ className: 'mt-6 gap-2' })}

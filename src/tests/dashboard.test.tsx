@@ -12,6 +12,7 @@ import {
 import { CustomerDashboardPage } from '@/pages/CustomerDashboardPage'
 import { NewRepairRequestPage } from '@/pages/NewRepairRequestPage'
 import { VendorMarketplacePage } from '@/pages/VendorMarketplacePage'
+import { RepairCompletionSection } from '@/features/repairs/components/RepairCompletionSection'
 import { RepairQuotationSection } from '@/features/repairs/components/RepairQuotationSection'
 
 function renderWithProviders(
@@ -194,6 +195,47 @@ describe('Phase 3 Customer Repairs UI', () => {
     ).toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: /Decline Quote/i }),
+    ).toBeInTheDocument()
+  })
+
+  it('renders vendor start repair action when quote is approved', () => {
+    const mockRepair: RepairItem = {
+      id: 'rep-789',
+      customerId: 'cust-1',
+      deviceType: 'phone',
+      brand: 'Samsung',
+      modelName: 'Galaxy S24',
+      issueCategory: 'screen',
+      description: 'Display lines after impact.',
+      images: [{ url: 'https://example.com/before.jpg' }],
+      urgency: 'high',
+      status: 'quote_approved',
+      assignedVendorId: 'vend-1',
+      assignedVendorName: 'Apex Tech',
+      finalApprovedAmount: 220,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    })
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <RepairCompletionSection
+            repair={mockRepair}
+            userRole="vendor"
+            userId="vend-1"
+          />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+
+    expect(screen.getByText(/Repair Execution & Completion/i)).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /Start Repair Work/i }),
     ).toBeInTheDocument()
   })
 })

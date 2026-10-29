@@ -24,6 +24,7 @@ import {
   type RepairStatus,
 } from '@/features/repairs/api/repairsApi'
 import { RepairEstimatesSection } from '@/features/repairs/components/RepairEstimatesSection'
+import { RepairCompletionSection } from '@/features/repairs/components/RepairCompletionSection'
 import { RepairQuotationSection } from '@/features/repairs/components/RepairQuotationSection'
 import { useAuthSession } from '@/hooks/useAuthSession'
 import { useQuery } from '@tanstack/react-query'
@@ -35,6 +36,7 @@ const WORKFLOW_STEPS: { status: RepairStatus; label: string }[] = [
   { status: 'diagnosed', label: 'Diagnosis Completed' },
   { status: 'quote_approved', label: 'Quote Approved' },
   { status: 'in_repair', label: 'In Repair' },
+  { status: 'ready_for_pickup', label: 'Ready for Pickup' },
   { status: 'completed', label: 'Completed' },
 ]
 
@@ -53,8 +55,9 @@ function getStepIndex(status: RepairStatus): number {
     case 'in_repair':
       return 5
     case 'ready_for_pickup':
-    case 'completed':
       return 6
+    case 'completed':
+      return 7
     case 'cancelled':
       return -1
     default:
@@ -182,7 +185,7 @@ export function RepairDetailPage() {
         </h2>
 
         <div className="mt-6">
-          <div className="hidden grid-cols-7 gap-2 md:grid">
+          <div className="hidden grid-cols-8 gap-2 md:grid">
             {WORKFLOW_STEPS.map((step, idx) => {
               const isPast = idx < currentStep
               const isCurrent = idx === currentStep
@@ -278,6 +281,12 @@ export function RepairDetailPage() {
 
           {/* Physical Diagnosis & Itemized Quotation Approval */}
           <RepairQuotationSection
+            repair={repair}
+            userRole={user?.role}
+            userId={user?.id}
+          />
+
+          <RepairCompletionSection
             repair={repair}
             userRole={user?.role}
             userId={user?.id}

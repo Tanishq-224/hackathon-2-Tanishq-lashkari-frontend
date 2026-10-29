@@ -57,6 +57,9 @@ export type RepairItem = {
   acceptedCostMax?: number
   quotationId?: string
   finalApprovedAmount?: number
+  repairBenchNotes?: string
+  afterRepairImages?: ImageAttachment[]
+  resolutionSummary?: string
   createdAt: string
   updatedAt: string
 }
@@ -98,6 +101,7 @@ export type CreateRepairPayload = {
 }
 
 export const customerRepairsQueryKey = ['repairs', 'customer'] as const
+export const vendorRepairsQueryKey = ['repairs', 'vendor', 'assigned'] as const
 export const repairDetailQueryKey = (id: string) => ['repairs', 'detail', id] as const
 export const marketplaceFeedQueryKey = (filters?: { deviceType?: string; urgency?: string }) =>
   ['marketplace', 'repairs', filters] as const
@@ -142,17 +146,20 @@ export type QuotationDecisionPayload = {
 }
 
 /**
- * @description Fetches all repair requests created by the current logged-in customer.
+ * @description Fetches repair tickets for the signed-in user (customer list or vendor assigned jobs).
  * @async
  * @returns {Promise<RepairItem[]>}
  */
-export async function fetchCustomerRepairs(): Promise<RepairItem[]> {
+export async function fetchMyRepairRequests(): Promise<RepairItem[]> {
   const { data } = await apiClient.get<{
     success: boolean
     data: { repairs: RepairItem[] }
   }>('/api/repairs')
   return data.data.repairs
 }
+
+/** @deprecated Use {@link fetchMyRepairRequests} — kept for existing imports/tests. */
+export const fetchCustomerRepairs = fetchMyRepairRequests
 
 /**
  * @description Fetches a single repair request by ID.
@@ -301,6 +308,62 @@ export async function decideQuotationRequest(
     data: { quotation: QuotationItem; repair: RepairItem; message: string }
     message: string
   }>(`/api/repairs/${repairId}/quotation/decision`, payload)
+  return data.data
+}
+
+export type StartRepairWorkPayload = {
+  repairBenchNotes?: string
+}
+
+export type SubmitRepairCompletionPayload = {
+  afterRepairImages: ImageAttachment[]
+  resolutionSummary: string
+}
+
+/**
+ * @description Vendor starts bench repair after customer authorizes the quotation.
+ * @async
+ */
+export async function startRepairWorkRequest(
+  repairId: string,
+  payload: StartRepairWorkPayload = {},
+): Promise<{ repair: RepairItem; message: string }> {
+  const { data } = await apiClient.post<{
+    success: boolean
+    data: { repair: RepairItem; message: string }
+    message: string
+  }>(`/api/repairs/${repairId}/repair-work/start`, payload)
+  return data.data
+}
+
+/**
+ * @description Vendor uploads after-repair proof photos and resolution notes.
+ * @async
+ */
+export async function submitRepairCompletionRequest(
+  repairId: string,
+  payload: SubmitRepairCompletionPayload,
+): Promise<{ repair: RepairItem; message: string }> {
+  const { data } = await apiClient.post<{
+    success: boolean
+    data: { repair: RepairItem; message: string }
+    message: string
+  }>(`/api/repairs/${repairId}/repair-work/completion`, payload)
+  return data.data
+}
+
+/**
+ * @description Customer confirms device pickup and closes the repair lifecycle.
+ * @async
+ */
+export async function confirmRepairPickupRequest(
+  repairId: string,
+): Promise<{ repair: RepairItem; message: string }> {
+  const { data } = await apiClient.post<{
+    success: boolean
+    data: { repair: RepairItem; message: string }
+    message: string
+  }>(`/api/repairs/${repairId}/repair-work/confirm-pickup`, {})
   return data.data
 }
 
