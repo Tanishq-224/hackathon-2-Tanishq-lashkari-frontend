@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 
 import { Container } from '@/components/shared/Container'
 import { ScrollFadeIn } from '@/components/shared/ScrollFadeIn'
+import { useAuthSession } from '@/hooks/useAuthSession'
 import { SITE_CONTACT } from '@/lib/site-contact'
 import { cn } from '@/lib/utils'
 
@@ -193,6 +194,15 @@ function FooterSocialLinks() {
  * @returns {JSX.Element} Public site footer.
  */
 export function PublicFooter() {
+  const { isAuthenticated } = useAuthSession()
+
+  const dynamicAccountLinks = isAuthenticated
+    ? ([
+        { to: '/dashboard', label: 'Dashboard' },
+        { to: '/dashboard/new-repair', label: 'New Repair' },
+      ] as const)
+    : accountLinks
+
   return (
     <footer className="relative mt-auto overflow-hidden border-t border-border bg-background">
       <Container className="relative z-10 pt-12 pb-6 sm:pt-14">
@@ -214,7 +224,7 @@ export function PublicFooter() {
 
           <div className="grid gap-10 sm:grid-cols-3 sm:gap-8">
             <FooterLinkGroup title="Explore" links={exploreLinks} />
-            <FooterLinkGroup title="Account" links={accountLinks} />
+            <FooterLinkGroup title="Account" links={dynamicAccountLinks} />
             <FooterContactColumn />
           </div>
         </div>

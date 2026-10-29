@@ -1,16 +1,19 @@
 import { createBrowserRouter } from 'react-router-dom'
 
+import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { PublicLayout } from '@/components/layout/PublicLayout'
 import { RouteScrollReset } from '@/components/layout/RouteScrollReset'
 import { AboutPage } from '@/pages/AboutPage'
 import { ContactPage } from '@/pages/ContactPage'
+import { CustomerDashboardPage } from '@/pages/CustomerDashboardPage'
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage'
 import { HomePage } from '@/pages/HomePage'
 import { LoginPage } from '@/pages/LoginPage'
+import { NewRepairRequestPage } from '@/pages/NewRepairRequestPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
+import { RepairDetailPage } from '@/pages/RepairDetailPage'
 import { ResetPasswordPage } from '@/pages/ResetPasswordPage'
 import { SignupPage } from '@/pages/SignupPage'
-import { DashboardShellPage } from '@/pages/DashboardShellPage'
 import { VerifyOtpPage } from '@/pages/VerifyOtpPage'
 
 /**
@@ -39,9 +42,14 @@ export function createAppRouter() {
       element: (
         <>
           <RouteScrollReset />
-          <DashboardShellPage />
+          <DashboardLayout />
         </>
       ),
+      children: [
+        { index: true, element: <CustomerDashboardPage /> },
+        { path: 'new-repair', element: <NewRepairRequestPage /> },
+        { path: 'repairs/:id', element: <RepairDetailPage /> },
+      ],
     },
   ])
 }
