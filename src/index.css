@@ -406,6 +406,11 @@
   .why-cinematic-rail {
     -webkit-overflow-scrolling: touch;
     scrollbar-width: thin;
+    overscroll-behavior-x: contain;
+  }
+
+  .dashboard-main {
+    -webkit-overflow-scrolling: touch;
   }
 
   .about-editorial-watermark {

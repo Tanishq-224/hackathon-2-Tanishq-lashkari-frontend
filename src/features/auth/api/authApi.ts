@@ -140,3 +140,17 @@ export async function fetchCurrentUser(): Promise<AuthUser | null> {
     return null
   }
 }
+
+/**
+ * @description Updates the signed-in user's display name.
+ * @async
+ */
+export async function updateProfileRequest(payload: {
+  fullName: string
+}): Promise<AuthUser> {
+  const { data } = await apiClient.patch<{
+    success: boolean
+    data: { user: AuthUser }
+  }>('/api/auth/profile', payload)
+  return data.data.user
+}

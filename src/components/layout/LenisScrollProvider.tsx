@@ -3,6 +3,8 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import Lenis from 'lenis'
 import { useLayoutEffect, type ReactNode } from 'react'
 
+import { isTestEnv } from '@/lib/is-test-env'
+
 gsap.registerPlugin(ScrollTrigger)
 
 type LenisScrollProviderProps = {
@@ -16,13 +18,17 @@ type LenisScrollProviderProps = {
  */
 export function LenisScrollProvider({ children }: LenisScrollProviderProps) {
   useLayoutEffect(() => {
+    if (isTestEnv()) {
+      return undefined
+    }
+
     const prefersReducedMotion = window.matchMedia(
       '(prefers-reduced-motion: reduce)',
     ).matches
 
     if (prefersReducedMotion) {
       ScrollTrigger.refresh()
-      return
+      return undefined
     }
 
     const lenis = new Lenis({
@@ -44,6 +50,25 @@ export function LenisScrollProvider({ children }: LenisScrollProviderProps) {
     }
 
     lenis.on('scroll', onLenisScroll)
+
+    ScrollTrigger.scrollerProxy(document.documentElement, {
+      scrollTop(value) {
+        if (typeof value === 'number') {
+          lenis.scrollTo(value, { immediate: true })
+        }
+        return lenis.scroll
+      },
+      getBoundingClientRect() {
+        return {
+          top: 0,
+          left: 0,
+          width: window.innerWidth,
+          height: window.innerHeight,
+        }
+      },
+      pinType: document.documentElement.style.transform ? 'transform' : 'fixed',
+    })
+
     gsap.ticker.lagSmoothing(0)
 
     /**

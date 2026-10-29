@@ -29,19 +29,35 @@ export function AboutEditorialClosingCta() {
             Transparent repairs, structured for customers and vendors
           </h2>
           <p className="mt-4 max-w-lg text-body-lg text-white/75">
-            Ready when you are — start a request or explore the home walkthrough.
+            From first estimate to pickup confirmation — one dashboard, email updates,
+            and proof-backed completion for every ticket.
           </p>
-          <Link
-            to="/contact"
-            className={cn(
-              buttonVariants({
-                size: 'lg',
-                className: 'mt-8 h-11 rounded-full px-8',
-              }),
-            )}
-          >
-            Start today
-          </Link>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <Link
+              to="/signup"
+              className={cn(
+                buttonVariants({
+                  size: 'lg',
+                  className: 'h-11 rounded-full px-8',
+                }),
+              )}
+            >
+              Create account
+            </Link>
+            <Link
+              to="/contact"
+              className={cn(
+                buttonVariants({
+                  variant: 'outline',
+                  size: 'lg',
+                  className:
+                    'h-11 rounded-full border-white/30 bg-white/5 px-8 text-white hover:bg-white/10 hover:text-white',
+                }),
+              )}
+            >
+              Talk to us
+            </Link>
+          </div>
         </div>
       </AboutEditorialShell>
     </section>

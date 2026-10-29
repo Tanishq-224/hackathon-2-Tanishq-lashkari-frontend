@@ -9,6 +9,7 @@ Object.assign(globalThis, {
 
 Object.defineProperty(import.meta, 'env', {
   value: {
+    MODE: 'test',
     VITE_API_URL: 'http://localhost:5000',
   },
   writable: true,

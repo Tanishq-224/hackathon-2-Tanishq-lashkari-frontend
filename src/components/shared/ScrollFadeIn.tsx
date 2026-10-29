@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from 'react'
 
+import { isTestEnv } from '@/lib/is-test-env'
 import { cn } from '@/lib/utils'
 
 gsap.registerPlugin(ScrollTrigger)
@@ -54,9 +55,10 @@ export function ScrollFadeIn({
   disabled = false,
 }: ScrollFadeInProps) {
   const ref = useRef<HTMLElement>(null)
+  const skipMotion = isTestEnv()
 
   useLayoutEffect(() => {
-    if (disabled) {
+    if (disabled || skipMotion) {
       return undefined
     }
 
@@ -92,14 +94,36 @@ export function ScrollFadeIn({
         stagger: useChildStagger ? stagger : undefined,
         scrollTrigger: {
           trigger: el,
-          start: `top ${(1 - threshold) * 100}%`,
+          start: 'top 92%',
           once,
           invalidateOnRefresh: true,
         },
       })
     }, el)
 
+    /**
+     * @description Reveals above-the-fold blocks that are already in view on first paint.
+     */
+    const revealIfVisible = () => {
+      ScrollTrigger.refresh()
+      const rect = el.getBoundingClientRect()
+      if (rect.top < window.innerHeight * (1 - threshold)) {
+        gsap.to(targets, {
+          autoAlpha: 1,
+          y: 0,
+          duration: Math.min(duration, 0.45),
+          ease,
+          stagger: useChildStagger ? stagger * 0.5 : undefined,
+          overwrite: true,
+        })
+      }
+    }
+
+    revealIfVisible()
+    window.addEventListener('load', revealIfVisible)
+
     return () => {
+      window.removeEventListener('load', revealIfVisible)
       ctx.revert()
     }
   }, [
@@ -108,6 +132,7 @@ export function ScrollFadeIn({
     distance,
     duration,
     ease,
+    skipMotion,
     once,
     stagger,
     threshold,
@@ -115,11 +140,12 @@ export function ScrollFadeIn({
 
   const Component = Tag as ElementType
   const usesChildStagger = stagger > 0 && Children.count(children) > 1
+  const hideUntilReveal = !usesChildStagger && !disabled && !skipMotion
 
   return (
     <Component
       ref={ref}
-      className={cn(!usesChildStagger && !disabled && 'opacity-0', className)}
+      className={cn(hideUntilReveal && 'opacity-0', className)}
       style={style}
     >
       {children}

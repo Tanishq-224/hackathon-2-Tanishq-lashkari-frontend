@@ -6,6 +6,7 @@ import { RouteScrollReset } from '@/components/layout/RouteScrollReset'
 import { AboutPage } from '@/pages/AboutPage'
 import { ContactPage } from '@/pages/ContactPage'
 import { CustomerDashboardPage } from '@/pages/CustomerDashboardPage'
+import { DashboardProfilePage } from '@/pages/DashboardProfilePage'
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage'
 import { HomePage } from '@/pages/HomePage'
 import { LoginPage } from '@/pages/LoginPage'
@@ -50,6 +51,7 @@ export function createAppRouter() {
         { index: true, element: <CustomerDashboardPage /> },
         { path: 'marketplace', element: <VendorMarketplacePage /> },
         { path: 'new-repair', element: <NewRepairRequestPage /> },
+        { path: 'profile', element: <DashboardProfilePage /> },
         { path: 'repairs/:id', element: <RepairDetailPage /> },
       ],
     },

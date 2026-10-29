@@ -146,6 +146,27 @@ export function CustomerDashboardPage() {
 
   return (
     <div className="space-y-8">
+      {user && (
+        <div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-r from-primary/10 via-card to-card px-5 py-4 shadow-sm md:px-6">
+          <div className="relative z-10 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-caption font-semibold uppercase tracking-wider text-primary">
+                {isVendor ? 'Vendor workspace' : 'Welcome back'}
+              </p>
+              <p className="font-display text-lg font-semibold text-foreground">
+                {user.fullName.split(' ')[0]}, your repair pipeline at a glance
+              </p>
+            </div>
+            <p className="text-ui text-muted-foreground">
+              {isVendor
+                ? 'Check notifications for new assignments and quote decisions.'
+                : 'Bell icon shows estimates, quotes, and pickup alerts.'}
+            </p>
+          </div>
+          <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-primary/10 blur-2xl" />
+        </div>
+      )}
+
       {/* Page Title & Action */}
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
@@ -172,7 +193,7 @@ export function CustomerDashboardPage() {
 
       {/* KPI Summary Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+        <div className="rounded-xl border border-border bg-card p-5 shadow-sm ring-1 ring-border/50 transition hover:shadow-md">
           <div className="flex items-center justify-between">
             <span className="text-ui font-medium text-muted-foreground">Total Requests</span>
             <div className="rounded-lg bg-secondary p-2 text-foreground">
@@ -184,7 +205,7 @@ export function CustomerDashboardPage() {
           </p>
         </div>
 
-        <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+        <div className="rounded-xl border border-primary/20 bg-gradient-to-br from-primary/10 to-card p-5 shadow-sm ring-1 ring-primary/10 transition hover:shadow-md">
           <div className="flex items-center justify-between">
             <span className="text-ui font-medium text-muted-foreground">Active in Progress</span>
             <div className="rounded-lg bg-primary/15 p-2 text-primary">
@@ -196,7 +217,7 @@ export function CustomerDashboardPage() {
           </p>
         </div>
 
-        <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+        <div className="rounded-xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 to-card p-5 shadow-sm ring-1 ring-emerald-500/10 transition hover:shadow-md">
           <div className="flex items-center justify-between">
             <span className="text-ui font-medium text-muted-foreground">Completed</span>
             <div className="rounded-lg bg-emerald-500/15 p-2 text-emerald-500">

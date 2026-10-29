@@ -8,11 +8,14 @@ import {
   Store,
   Sun,
   User,
+  UserCircle,
   Wrench,
 } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 
+import { DashboardNotificationsBell } from './DashboardNotificationsBell'
 import { RepairexBrandMark } from './RepairexBrandMark'
+import { DashboardScrollReveal } from '@/components/shared/DashboardScrollReveal'
 import { Button } from '@/components/ui/button'
 import { logoutRequest } from '@/features/auth/api/authApi'
 import {
@@ -75,6 +78,12 @@ export function DashboardLayout() {
           icon: Wrench,
           active: location.pathname === '/dashboard',
         },
+        {
+          label: 'My Profile',
+          to: '/dashboard/profile',
+          icon: UserCircle,
+          active: location.pathname === '/dashboard/profile',
+        },
       ]
     : [
         {
@@ -89,31 +98,40 @@ export function DashboardLayout() {
           icon: PlusCircle,
           active: location.pathname === '/dashboard/new-repair',
         },
+        {
+          label: 'My Profile',
+          to: '/dashboard/profile',
+          icon: UserCircle,
+          active: location.pathname === '/dashboard/profile',
+        },
       ]
 
   return (
     <div className="flex min-h-dvh flex-col bg-background text-foreground">
       {/* Dedicated Dashboard Workspace Header */}
-      <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b border-border bg-card/95 px-4 backdrop-blur-md md:px-8">
+      <header className="sticky top-0 z-40 flex min-h-16 w-full flex-wrap items-center justify-between gap-2 border-b border-border bg-card/95 px-3 py-2 backdrop-blur-md sm:flex-nowrap sm:gap-3 sm:px-4 md:px-8">
         {/* Brand & Workspace Mode */}
-        <div className="flex items-center gap-4 sm:gap-6">
+        <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-4 md:gap-6">
           <Link
             to="/"
             className="flex items-center gap-2.5 transition hover:opacity-90"
             aria-label="Repairex Home"
           >
             <RepairexBrandMark className="size-8 sm:size-9" />
-            <span className="font-display text-lg font-bold tracking-tight text-foreground sm:inline-block">
+            <span className="font-display text-base font-bold tracking-tight text-foreground sm:text-lg">
               Repairex
             </span>
           </Link>
-          <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-caption font-semibold uppercase tracking-wider text-primary">
+          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary sm:hidden">
+            {isVendor ? 'Vendor' : 'Customer'}
+          </span>
+          <span className="hidden rounded-full bg-primary/10 px-2.5 py-0.5 text-caption font-semibold uppercase tracking-wider text-primary sm:inline">
             {isVendor ? 'Vendor Portal' : 'Customer Workspace'}
           </span>
         </div>
 
         {/* Right Actions */}
-        <div className="flex items-center gap-3">
+        <div className="flex w-full shrink-0 items-center justify-end gap-1.5 sm:w-auto sm:gap-3">
           <Link
             to="/"
             className="hidden items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-caption font-medium text-muted-foreground transition hover:bg-secondary hover:text-foreground sm:flex"
@@ -121,6 +139,8 @@ export function DashboardLayout() {
             <Home className="size-3.5" />
             <span>Public Site</span>
           </Link>
+
+          <DashboardNotificationsBell />
 
           {/* Theme Toggle */}
           <button
@@ -137,7 +157,10 @@ export function DashboardLayout() {
           </button>
 
           {/* User Profile Pill */}
-          <div className="flex items-center gap-2.5 rounded-xl border border-border bg-secondary/40 px-3 py-1.5">
+          <Link
+            to="/dashboard/profile"
+            className="flex items-center gap-2.5 rounded-xl border border-border bg-secondary/40 px-3 py-1.5 transition hover:border-primary/40 hover:bg-secondary/70"
+          >
             <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/20 text-xs font-bold text-primary">
               {user ? getProfileInitials(user.fullName) : <User className="size-3.5" />}
             </div>
@@ -149,7 +172,7 @@ export function DashboardLayout() {
                 {user?.email}
               </p>
             </div>
-          </div>
+          </Link>
 
           {/* Logout Button */}
           <Button
@@ -209,14 +232,16 @@ export function DashboardLayout() {
         </aside>
 
         {/* Content Outlet with bottom padding on mobile so bottom nav never covers content */}
-        <main className="flex-1 overflow-x-hidden p-4 pb-24 md:p-8 md:pb-12 lg:pb-8">
-          <Outlet />
+        <main className="dashboard-main flex-1 overflow-x-hidden p-3 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] sm:p-4 md:p-8 md:pb-12 lg:pb-8">
+          <DashboardScrollReveal>
+            <Outlet />
+          </DashboardScrollReveal>
         </main>
       </div>
 
       {/* Mobile / Tablet Bottom Navigation Bar (<1024px) */}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-40 flex h-16 items-center justify-around border-t border-border bg-card/95 px-2 backdrop-blur-md lg:hidden"
+        className="dashboard-bottom-nav fixed bottom-0 left-0 right-0 z-40 flex h-[4.25rem] items-center justify-around border-t border-border bg-card/95 px-2 pb-[env(safe-area-inset-bottom,0px)] backdrop-blur-md lg:hidden"
         aria-label="Mobile Navigation"
       >
         {isVendor ? (
@@ -244,6 +269,18 @@ export function DashboardLayout() {
               <Wrench className="h-5 w-5" />
               <span>Active</span>
             </Link>
+
+            <Link
+              to="/dashboard/profile"
+              className={`flex flex-col items-center gap-1 py-1 text-[11px] font-medium transition ${
+                location.pathname === '/dashboard/profile'
+                  ? 'text-primary'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <UserCircle className="h-5 w-5" />
+              <span>Profile</span>
+            </Link>
           </>
         ) : (
           <>
@@ -270,16 +307,20 @@ export function DashboardLayout() {
               <PlusCircle className="h-5 w-5" />
               <span>New</span>
             </Link>
+
+            <Link
+              to="/dashboard/profile"
+              className={`flex flex-col items-center gap-1 py-1 text-[11px] font-medium transition ${
+                location.pathname === '/dashboard/profile'
+                  ? 'text-primary'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <UserCircle className="h-5 w-5" />
+              <span>Profile</span>
+            </Link>
           </>
         )}
-
-        <Link
-          to="/"
-          className="flex flex-col items-center gap-1 py-1 text-[11px] font-medium text-muted-foreground transition hover:text-foreground"
-        >
-          <Home className="h-5 w-5" />
-          <span>Home</span>
-        </Link>
       </nav>
     </div>
   )

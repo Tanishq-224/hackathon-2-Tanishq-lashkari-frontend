@@ -132,7 +132,7 @@ export function RepairDetailPage() {
   const currentStep = getStepIndex(repair.status)
 
   return (
-    <div className="mx-auto max-w-4xl space-y-8">
+    <div className="mx-auto max-w-4xl space-y-5 sm:space-y-8">
       {/* Back button */}
       <div>
         <Link
@@ -145,27 +145,27 @@ export function RepairDetailPage() {
       </div>
 
       {/* Header Banner */}
-      <div className="flex flex-col justify-between gap-4 rounded-xl border border-border bg-card p-6 shadow-sm md:flex-row md:items-center">
-        <div className="flex items-center gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <DeviceIcon className="h-7 w-7" />
+      <div className="flex flex-col justify-between gap-4 rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6 md:flex-row md:items-center">
+        <div className="flex min-w-0 items-start gap-3 sm:items-center sm:gap-4">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary sm:h-14 sm:w-14">
+            <DeviceIcon className="h-6 w-6 sm:h-7 sm:w-7" />
           </div>
-          <div>
-            <div className="flex items-center gap-2.5">
-              <h1 className="font-display text-h2 font-bold tracking-tight text-foreground">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="font-display text-xl font-bold leading-tight tracking-tight text-foreground break-words sm:text-h2">
                 {repair.brand} {repair.modelName}
               </h1>
-              <span className="rounded-full bg-secondary px-2.5 py-0.5 text-caption font-semibold uppercase text-muted-foreground">
+              <span className="shrink-0 rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground sm:px-2.5 sm:text-caption">
                 {repair.deviceType}
               </span>
             </div>
-            <p className="mt-1 text-ui capitalize text-muted-foreground">
+            <p className="mt-1 text-caption capitalize text-muted-foreground sm:text-ui">
               Issue: {repair.issueCategory.replace('_', ' ')} • Urgency: {repair.urgency}
             </p>
           </div>
         </div>
 
-        <div className="flex flex-col items-start gap-1 text-caption text-muted-foreground md:items-end">
+        <div className="flex flex-col items-start gap-1 border-t border-border pt-3 text-caption text-muted-foreground md:border-t-0 md:pt-0 md:items-end">
           <span>Ticket ID: {repair.id.slice(0, 12)}</span>
           <span className="flex items-center gap-1.5">
             <Calendar className="h-3.5 w-3.5" />
@@ -179,13 +179,13 @@ export function RepairDetailPage() {
       </div>
 
       {/* Progress Timeline Tracker */}
-      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-        <h2 className="font-display text-ui font-semibold uppercase tracking-wider text-muted-foreground">
+      <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
+        <h2 className="font-display text-caption font-semibold uppercase tracking-wider text-muted-foreground sm:text-ui">
           Repair Lifecycle Status
         </h2>
 
-        <div className="mt-6">
-          <div className="hidden grid-cols-8 gap-2 md:grid">
+        <div className="mt-4 sm:mt-6">
+          <div className="hidden grid-cols-4 gap-2 xl:grid xl:grid-cols-8">
             {WORKFLOW_STEPS.map((step, idx) => {
               const isPast = idx < currentStep
               const isCurrent = idx === currentStep
@@ -219,13 +219,17 @@ export function RepairDetailPage() {
           </div>
 
           {/* Mobile Current Status Pill */}
-          <div className="flex items-center justify-between rounded-lg bg-secondary/50 p-3 md:hidden">
+          <div className="flex flex-col gap-2 rounded-xl border border-border bg-secondary/40 p-3 sm:flex-row sm:items-center sm:justify-between xl:hidden">
             <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-primary" />
-              <span className="text-ui font-medium text-foreground">Current Stage:</span>
+              <Clock className="h-4 w-4 shrink-0 text-primary" />
+              <span className="text-caption font-medium text-foreground sm:text-ui">
+                Current stage
+              </span>
             </div>
-            <span className="rounded-full bg-primary/15 px-3 py-0.5 text-ui font-bold text-primary">
-              {WORKFLOW_STEPS[currentStep]?.label || repair.status}
+            <span className="inline-flex max-w-full rounded-full bg-primary/15 px-3 py-1 text-caption font-bold text-primary sm:text-ui">
+              <span className="truncate">
+                {WORKFLOW_STEPS[currentStep]?.label || repair.status}
+              </span>
             </span>
           </div>
         </div>

@@ -38,8 +38,9 @@ export function ContactHeroSection() {
             Every message, one clear path to help
           </h2>
           <p className="mt-4 text-body-lg leading-relaxed text-white/85">
-            Call, email, or use the form below — you only get a success message
-            after our server accepts your submission.
+            Repair requests, vendor partnerships, or general support — pick a channel
+            below. Active customers also get lifecycle email and in-app alerts for
+            estimates, quotes, and pickup.
           </p>
           <Link
             to="#contact-form"

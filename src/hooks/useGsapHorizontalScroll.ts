@@ -48,17 +48,14 @@ export function useGsapHorizontalScroll(
      * @returns {number} Negative pixel distance for `x` transform.
      */
     const getScrollDistance = () => {
-      const styles = window.getComputedStyle(railEl)
-      const paddingLeft = Number.parseFloat(styles.paddingLeft) || 0
-      const paddingRight = Number.parseFloat(styles.paddingRight) || 0
-      const travel =
-        railEl.scrollWidth - window.innerWidth + paddingLeft + paddingRight + 48
-
+      const railWidth = railEl.scrollWidth
+      const viewport = window.innerWidth
+      const travel = railWidth - viewport + 32
       return -Math.max(0, travel)
     }
 
     const ctx = gsap.context(() => {
-      gsap.to(railEl, {
+      const tween = gsap.to(railEl, {
         x: getScrollDistance,
         ease: 'none',
         scrollTrigger: {
@@ -66,35 +63,51 @@ export function useGsapHorizontalScroll(
           start: `top top+=${pinStartOffset}`,
           end: () => {
             const distance = Math.abs(getScrollDistance())
-            return `+=${Math.max(distance, window.innerHeight)}`
+            return `+=${Math.max(distance * 1.05, window.innerHeight * 0.75)}`
           },
           pin: true,
-          scrub: 0.85,
+          pinSpacing: true,
+          scrub: true,
           anticipatePin: 1,
           invalidateOnRefresh: true,
+          fastScrollEnd: true,
           onUpdate: (self) => {
             onProgress?.(self.progress)
           },
         },
       })
+
+      void tween
     }, pinEl)
 
     /**
      * @description Refreshes measurements after images load inside the rail.
      * @returns {void}
      */
-    const refresh = () => ScrollTrigger.refresh()
+    const refresh = () => {
+      ScrollTrigger.refresh()
+    }
 
     window.addEventListener('load', refresh)
+    window.addEventListener('resize', refresh)
+
     const resizeObserver =
       typeof ResizeObserver !== 'undefined'
         ? new ResizeObserver(refresh)
         : null
 
     resizeObserver?.observe(railEl)
+    railEl.querySelectorAll('img').forEach((img) => {
+      if (!img.complete) {
+        img.addEventListener('load', refresh, { once: true })
+      }
+    })
+
+    refresh()
 
     return () => {
       window.removeEventListener('load', refresh)
+      window.removeEventListener('resize', refresh)
       resizeObserver?.disconnect()
       ctx.revert()
     }

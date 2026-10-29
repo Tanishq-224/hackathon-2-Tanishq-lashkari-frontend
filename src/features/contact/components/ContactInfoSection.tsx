@@ -55,7 +55,10 @@ export function ContactInfoSection() {
           const external = 'external' in rest && rest.external
 
           return (
-            <MarketingPanel key={title} className="flex h-full flex-col p-5">
+            <MarketingPanel
+              key={title}
+              className="flex h-full flex-col p-5 transition duration-300 hover:-translate-y-0.5 hover:shadow-md"
+            >
               <span className="flex size-10 items-center justify-center rounded-xl bg-primary/12 text-primary">
                 <Icon aria-hidden className="size-[1.125rem]" strokeWidth={2.1} />
               </span>

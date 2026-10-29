@@ -3,6 +3,8 @@ import { CheckCircle2 } from 'lucide-react'
 
 import defaultAuthImage from '@/assets/login-visual.jpg'
 import { RepairexBrandMark } from '@/components/layout/RepairexBrandMark'
+import { ScrollFadeIn } from '@/components/shared/ScrollFadeIn'
+import { isTestEnv } from '@/lib/is-test-env'
 
 export type AuthSplitLayoutProps = {
   title: string
@@ -109,7 +111,15 @@ export function AuthSplitLayout({
 
         {/* Form Side (Full height with generous top padding for navbar) */}
         <div className="flex min-h-screen flex-col justify-center px-6 py-12 pt-10 sm:px-10 sm:py-16 sm:pt-14 lg:col-span-7 lg:px-14 lg:pt-28 lg:pb-16 xl:col-span-6 xl:px-18 xl:pt-32">
-          <div className="mx-auto w-full max-w-lg">
+          <ScrollFadeIn
+            className="mx-auto w-full max-w-lg"
+            distance={18}
+            duration={0.6}
+            delay={0.06}
+            stagger={0.08}
+            threshold={0.02}
+            disabled={isTestEnv()}
+          >
             <div className="mb-8 space-y-2">
               <h1 className="font-display text-h2 font-bold tracking-tight text-foreground">
                 {title}
@@ -126,7 +136,7 @@ export function AuthSplitLayout({
                 {footer}
               </div>
             ) : null}
-          </div>
+          </ScrollFadeIn>
         </div>
       </div>
     </main>

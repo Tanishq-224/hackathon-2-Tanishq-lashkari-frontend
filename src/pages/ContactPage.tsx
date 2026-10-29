@@ -1,3 +1,4 @@
+import { ScrollFadeIn } from '@/components/shared/ScrollFadeIn'
 import { ContactFaqSection } from '@/features/contact/components/ContactFaqSection'
 import { ContactFormSection } from '@/features/contact/components/ContactFormSection'
 import { ContactFinalCtaSection } from '@/features/contact/components/ContactFinalCtaSection'
@@ -13,11 +14,21 @@ export function ContactPage() {
   return (
     <main className="flex flex-1 flex-col">
       <ContactHeroSection />
-      <ContactInfoSection />
-      <ContactFormSection />
-      <ContactFaqSection />
-      <ContactMapSection />
-      <ContactFinalCtaSection />
+      <ScrollFadeIn distance={22} stagger={0.08}>
+        <ContactInfoSection />
+      </ScrollFadeIn>
+      <ScrollFadeIn distance={22}>
+        <ContactFormSection />
+      </ScrollFadeIn>
+      <ScrollFadeIn distance={22}>
+        <ContactFaqSection />
+      </ScrollFadeIn>
+      <ScrollFadeIn distance={22}>
+        <ContactMapSection />
+      </ScrollFadeIn>
+      <ScrollFadeIn distance={18}>
+        <ContactFinalCtaSection />
+      </ScrollFadeIn>
     </main>
   )
 }

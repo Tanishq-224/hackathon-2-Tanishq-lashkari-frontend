@@ -175,18 +175,26 @@ export function WhyChooseSection() {
   const pinRef = useRef<HTMLDivElement>(null)
   const railRef = useRef<HTMLDivElement>(null)
   const [activeIndex, setActiveIndex] = useState(0)
-  const [reducedMotion, setReducedMotion] = useState(false)
+  const [useNativeRail, setUseNativeRail] = useState(false)
 
   useEffect(() => {
-    const media = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const motionMedia = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const layoutMedia = window.matchMedia('(max-width: 1023px)')
+
     /**
-     * @description Syncs reduced-motion preference into React state.
+     * @description Syncs motion preference and mobile layout into React state.
      * @returns {void}
      */
-    const syncMotion = () => setReducedMotion(media.matches)
-    syncMotion()
-    media.addEventListener('change', syncMotion)
-    return () => media.removeEventListener('change', syncMotion)
+    const sync = () => {
+      setUseNativeRail(layoutMedia.matches || motionMedia.matches)
+    }
+    sync()
+    motionMedia.addEventListener('change', sync)
+    layoutMedia.addEventListener('change', sync)
+    return () => {
+      motionMedia.removeEventListener('change', sync)
+      layoutMedia.removeEventListener('change', sync)
+    }
   }, [])
 
   /**
@@ -203,7 +211,7 @@ export function WhyChooseSection() {
   }, [])
 
   useGsapHorizontalScroll(pinRef, railRef, {
-    enabled: !reducedMotion,
+    enabled: !useNativeRail,
     onProgress: handleProgress,
   })
 
@@ -231,14 +239,18 @@ export function WhyChooseSection() {
         </ScrollFadeIn>
       </Container>
 
-      {reducedMotion ? (
+      {useNativeRail ? (
         <Container className="pb-14 pt-10 sm:pb-16 lg:pb-20">
-          <div className="why-cinematic-rail -mx-1 flex gap-5 overflow-x-auto px-1 pb-4 sm:gap-6">
+          <div className="why-cinematic-rail -mx-1 flex snap-x snap-mandatory gap-5 overflow-x-auto overscroll-x-contain px-1 pb-4 sm:gap-6">
             {whyCards.map((card) =>
               card.kind === 'stat' ? (
-                <WhyStatCard key={card.key} card={card} />
+                <div key={card.key} className="snap-center shrink-0">
+                  <WhyStatCard card={card} />
+                </div>
               ) : (
-                <WhyVisualCard key={card.key} card={card} />
+                <div key={card.key} className="snap-center shrink-0">
+                  <WhyVisualCard card={card} />
+                </div>
               ),
             )}
           </div>
