@@ -2,13 +2,13 @@ import type { ComponentType } from 'react'
 import { render, screen, within } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 
-import { AuthLayout } from '@/components/layout/AuthLayout'
 import { PublicLayout } from '@/components/layout/PublicLayout'
 import { AppProviders } from '@/providers/AppProviders'
 import { AboutPage } from '@/pages/AboutPage'
 import { ContactPage } from '@/pages/ContactPage'
 import { HomePage } from '@/pages/HomePage'
 import { LoginPage } from '@/pages/LoginPage'
+import { SignupPage } from '@/pages/SignupPage'
 
 /**
  * @description Renders a route tree inside the same providers used by the app.
@@ -88,12 +88,12 @@ describe('HomePage routing shell', () => {
     )
   })
 
-  it('shows log in entry point in the navbar', () => {
+  it('shows log in entry point in the navbar', async () => {
     renderPublicRoute(HomePage, '', '/')
 
     const header = screen.getByRole('banner')
     expect(
-      within(header).getByRole('link', { name: /^log in$/i }),
+      await within(header).findByRole('link', { name: /^log in$/i }),
     ).toHaveAttribute('href', '/login')
   })
 })
@@ -143,19 +143,10 @@ describe('ContactPage public sections', () => {
   })
 })
 
-describe('AuthLayout shell', () => {
-  it('shows brand header without public footer chrome', () => {
+describe('Login page shell', () => {
+  it('renders login form without public footer chrome', () => {
     const router = createMemoryRouter(
-      [
-        {
-          path: '/login',
-          element: (
-            <AuthLayout>
-              <LoginPage />
-            </AuthLayout>
-          ),
-        },
-      ],
+      [{ path: '/login', element: <LoginPage /> }],
       { initialEntries: ['/login'] },
     )
 
@@ -165,8 +156,26 @@ describe('AuthLayout shell', () => {
       </AppProviders>,
     )
 
-    expect(screen.getByRole('heading', { level: 1, name: /log in/i })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /back to home/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: /welcome back/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /forgot password/i })).toBeInTheDocument()
     expect(screen.queryByRole('contentinfo')).not.toBeInTheDocument()
+  })
+
+  it('renders login page with public header and footer inside PublicLayout', async () => {
+    renderPublicRoute(LoginPage, 'login', '/login')
+
+    expect(await screen.findByRole('heading', { level: 1, name: /welcome back/i })).toBeInTheDocument()
+    expect(screen.getByRole('banner')).toBeInTheDocument()
+    expect(screen.getByRole('contentinfo')).toBeInTheDocument()
+  })
+
+  it('renders signup page with customer and vendor role choices inside PublicLayout', async () => {
+    renderPublicRoute(SignupPage, 'signup', '/signup')
+
+    expect(await screen.findByRole('heading', { level: 1, name: /create your account/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /customer/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /vendor/i })).toBeInTheDocument()
+    expect(screen.getByRole('banner')).toBeInTheDocument()
+    expect(screen.getByRole('contentinfo')).toBeInTheDocument()
   })
 })

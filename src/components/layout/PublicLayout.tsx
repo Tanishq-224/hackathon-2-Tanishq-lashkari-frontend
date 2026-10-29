@@ -14,6 +14,12 @@ import { cn } from '@/lib/utils'
 export function PublicLayout() {
   const { pathname } = useLocation()
   const isHome = pathname === '/'
+  const isAuthPage =
+    pathname === '/login' ||
+    pathname === '/signup' ||
+    pathname === '/verify-otp' ||
+    pathname === '/forgot-password' ||
+    pathname === '/reset-password'
 
   return (
     <LenisScrollProvider>
@@ -26,6 +32,7 @@ export function PublicLayout() {
             !isHome &&
               pathname !== '/about' &&
               pathname !== '/contact' &&
+              !isAuthPage &&
               'pt-[5.5rem] sm:pt-24',
           )}
         >

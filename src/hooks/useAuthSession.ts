@@ -1,15 +1,17 @@
-export type AuthSessionUser = {
-  id: string
-  fullName: string
-  email: string
-  role: 'customer' | 'vendor' | 'admin'
-}
+import { useQuery } from '@tanstack/react-query'
+
+import { fetchCurrentUser, type AuthUser } from '@/features/auth/api/authApi'
+
+export type AuthSessionUser = AuthUser
 
 export type AuthSessionState = {
   isAuthenticated: boolean
   user: AuthSessionUser | null
   isLoading: boolean
 }
+
+/** @description TanStack Query key for the current auth session. */
+export const authSessionQueryKey = ['auth', 'me'] as const
 
 /**
  * @description Reads the current auth session for public chrome (navbar avatar vs login buttons).
@@ -18,11 +20,17 @@ export type AuthSessionState = {
  * const { isAuthenticated, user } = useAuthSession()
  */
 export function useAuthSession(): AuthSessionState {
-  // TODO: Phase 2 — wire to TanStack Query + `/api/auth/me` cookie session.
+  const { data, isLoading } = useQuery({
+    queryKey: authSessionQueryKey,
+    queryFn: fetchCurrentUser,
+    staleTime: 60_000,
+    retry: false,
+  })
+
   return {
-    isAuthenticated: false,
-    user: null,
-    isLoading: false,
+    isAuthenticated: Boolean(data),
+    user: data ?? null,
+    isLoading,
   }
 }
 
