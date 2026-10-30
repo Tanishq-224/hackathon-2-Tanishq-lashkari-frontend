@@ -2,7 +2,7 @@ import { ArrowUpRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 import aboutCardOne from '@/assets/devices/device-phone.jpg'
-import aboutCardTwo from '@/assets/cta-factory-background.jpg'
+import aboutCardTwo from '@/assets/about-vision-quotations.jpg'
 import { AboutEditorialShell } from '@/features/about/components/editorial/AboutEditorialShell'
 import { cn } from '@/lib/utils'
 
@@ -62,7 +62,7 @@ export function AboutEditorialVisionGrid() {
                 <img
                   src={image}
                   alt=""
-                  className="size-full object-cover transition duration-700 group-hover:scale-[1.03]"
+                  className="size-full object-cover object-center transition duration-700 group-hover:scale-[1.03]"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
               </div>

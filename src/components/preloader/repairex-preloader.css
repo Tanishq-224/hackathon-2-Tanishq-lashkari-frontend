@@ -1,0 +1,134 @@
+.repairex-preloader {
+  touch-action: none;
+  background: transparent;
+}
+
+.repairex-preloader__panels {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  height: 100%;
+  min-height: 100dvh;
+}
+
+.repairex-preloader__panel-shell {
+  flex: 0 0 calc(100% / var(--preloader-cols, 4));
+  width: calc(100% / var(--preloader-cols, 4));
+  height: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.repairex-preloader__panels--2 {
+  --preloader-cols: 2;
+}
+
+.repairex-preloader__panels--3 {
+  --preloader-cols: 3;
+}
+
+.repairex-preloader__panels--4 {
+  --preloader-cols: 4;
+}
+
+/* Separators on shells so all three lines stay visible (incl. cols 2–3) */
+.repairex-preloader__panel-shell:not(:last-child) {
+  border-right: 1px solid rgba(216, 214, 201, 0.32);
+}
+
+.repairex-preloader__panel {
+  width: 100%;
+  height: 100%;
+  will-change: transform;
+  background-color: #000000;
+}
+
+.repairex-preloader__text-layer {
+  pointer-events: none;
+}
+
+.repairex-preloader__composition {
+  --preloader-type: clamp(1.75rem, 6.5vw, 3.25rem);
+  --preloader-line: 1.15;
+  --preloader-gap: 0.35em;
+
+  position: relative;
+  width: 100%;
+  font-size: var(--preloader-type);
+  line-height: var(--preloader-line);
+  height: 1.15em;
+  max-width: none;
+  padding-inline: 0;
+  opacity: 0;
+}
+
+/* “Digital” left of viewport center; rolling word right of center */
+.repairex-preloader__digital {
+  position: absolute;
+  top: 50%;
+  right: 50%;
+  transform: translateY(-50%);
+  padding-right: var(--preloader-gap);
+  text-align: right;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 1em;
+  letter-spacing: -0.02em;
+  line-height: inherit;
+  color: var(--color-off-white);
+  white-space: nowrap;
+}
+
+.repairex-preloader__word-slot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translateY(-50%);
+  padding-left: var(--preloader-gap);
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: 1em;
+  line-height: inherit;
+  width: 11ch;
+  min-width: 11ch;
+  height: 1.15em;
+}
+
+.repairex-preloader__word-track {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+}
+
+.repairex-preloader__word {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  height: 1.15em;
+  font-family: inherit;
+  font-weight: 500;
+  font-size: 1em;
+  letter-spacing: -0.02em;
+  line-height: var(--preloader-line);
+  color: var(--color-signal-orange);
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .repairex-preloader__word-slot {
+    width: 10ch;
+    min-width: 10ch;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .repairex-preloader__panel {
+    will-change: auto;
+  }
+
+  .repairex-preloader__word-track {
+    will-change: auto;
+  }
+}

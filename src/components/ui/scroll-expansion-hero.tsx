@@ -46,6 +46,8 @@ export type ScrollExpandMediaProps = {
   posterSrc?: string
   bgImageSrc: string
   title?: string
+  /** @description Words on the first title line before the accent line (default: 4 → “We are a repair”). */
+  titleLeadWordCount?: number
   date?: string
   scrollToExpand?: string
   textBlend?: boolean
@@ -78,6 +80,7 @@ export function ScrollExpandMedia({
   posterSrc,
   bgImageSrc,
   title,
+  titleLeadWordCount = 4,
   date,
   scrollToExpand,
   textBlend,
@@ -121,8 +124,13 @@ export function ScrollExpandMedia({
     }
   }, [scrollDistance, holdDistance, smoothing, mediaZoom, overlayScrim])
 
-  const firstWord = title ? title.split(' ')[0] : ''
-  const restOfTitle = title ? title.split(' ').slice(1).join(' ') : ''
+  const titleWords = title ? title.trim().split(/\s+/) : []
+  const leadCount = Math.min(
+    Math.max(titleLeadWordCount, 1),
+    Math.max(titleWords.length - 1, 1),
+  )
+  const titleLead = titleWords.slice(0, leadCount).join(' ')
+  const titleRest = titleWords.slice(leadCount).join(' ')
 
   /**
    * @description Maps normalized scroll progress to box size, titles, and overlay (smoothstep eased).
@@ -405,13 +413,13 @@ export function ScrollExpandMedia({
                   ref={titleFirstRef}
                   className="scroll-expansion-hero__title-line text-white"
                 >
-                  {firstWord}
+                  {titleLead}
                 </h2>
                 <h2
                   ref={titleRestRef}
                   className="scroll-expansion-hero__title-line text-primary"
                 >
-                  {restOfTitle}
+                  {titleRest}
                 </h2>
               </div>
             ) : null}

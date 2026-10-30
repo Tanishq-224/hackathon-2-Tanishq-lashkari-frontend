@@ -1,4 +1,4 @@
-import aboutBrandHero from '@/assets/about-brand-hero.jpg'
+import aboutScrollExpandMedia from '@/assets/about-scroll-expand-media.jpg'
 import aboutHeroBackground from '@/assets/hero-background.jpg'
 import { ScrollExpandMedia } from '@/components/ui/scroll-expansion-hero'
 import { AboutExpandHeroPanel } from '@/features/about/components/editorial/AboutExpandHeroPanel'
@@ -14,7 +14,7 @@ export function AboutEditorialScrollHero() {
         ariaLabel="About Repairex"
         className="bg-[#08090b]"
         mediaType="image"
-        mediaSrc={aboutBrandHero}
+        mediaSrc={aboutScrollExpandMedia}
         bgImageSrc={aboutHeroBackground}
         title="We are a repair marketplace rooted in clarity"
         date="About Repairex"

@@ -23,11 +23,11 @@ export const PAGE_REVEAL_CONFIG: PageRevealConfig = {
   mode: 'once-per-session',
   includeAuthRoutes: false,
   enableRouteTransitions: false,
-  words: ['Diagnose', 'Quote', 'Approve', 'Repair', 'Track'],
-  totalDurationSec: 3.2,
-  fallbackTimeoutMs: 6000,
+  words: ['Repairs', 'Care', 'Trust', 'Experience'],
+  totalDurationSec: 6.5,
+  fallbackTimeoutMs: 9000,
   reducedMotionFadeMs: 250,
-  sessionStorageKey: 'repairex-page-reveal-v1',
+  sessionStorageKey: 'repairex-page-reveal-v2',
   publicPaths: ['/', '/about', '/contact'],
 }
 
@@ -68,7 +68,7 @@ export function isRevealEligiblePath(
  * @returns {boolean}
  */
 export function shouldForcePageRevealReplay(): boolean {
-  if (!import.meta.env.DEV || typeof window === 'undefined') {
+  if (import.meta.env?.DEV !== true || typeof window === 'undefined') {
     return false
   }
   const params = new URLSearchParams(window.location.search)
@@ -92,7 +92,11 @@ export function shouldRunPageRevealForSession(
   if (typeof window === 'undefined') {
     return false
   }
-  if (config.mode === 'off' || isTestEnv()) {
+  const isDev = import.meta.env?.DEV === true
+  const mode =
+    isDev && config.mode === 'once-per-session' ? 'every-load' : config.mode
+
+  if (mode === 'off' || isTestEnv()) {
     return false
   }
   if (shouldForcePageRevealReplay()) {
@@ -104,7 +108,7 @@ export function shouldRunPageRevealForSession(
     resetPageRevealRuntimeState()
     return true
   }
-  if (config.mode === 'once-per-session') {
+  if (mode === 'once-per-session') {
     try {
       if (sessionStorage.getItem(config.sessionStorageKey) === '1') {
         return false
