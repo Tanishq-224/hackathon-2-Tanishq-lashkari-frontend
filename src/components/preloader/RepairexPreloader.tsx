@@ -29,18 +29,18 @@ type BodyScrollSnapshot = {
 
 const PANEL_TONES = ['1', '2', '3', '4'] as const
 
-/** Tuned for ~4s total (4 words + 4 panel exit on desktop). */
+/** Tuned for ~3.5s total (4 words + 4 panel exit on desktop). */
 const PRELOADER_TIMING = {
-  textFadeIn: 1,
-  wordScrollDuration: 0.55,
-  wordScrollFirstOverlap: 0.85,
-  wordScrollGap: 0.15,
-  pauseBeforeExit: 0.2,
-  textFadeOut: 0.35,
-  panelDuration: 0.45,
-  panelStagger: 0.08,
-  rootFadeOut: 0.12,
-  rootFadeOverlap: 0.08,
+  textFadeIn: 0.85,
+  wordScrollDuration: 0.48,
+  wordScrollFirstOverlap: 0.72,
+  wordScrollGap: 0.12,
+  pauseBeforeExit: 0.15,
+  textFadeOut: 0.3,
+  panelDuration: 0.4,
+  panelStagger: 0.07,
+  rootFadeOut: 0.1,
+  rootFadeOverlap: 0.06,
 } as const
 
 let bodySnapshot: BodyScrollSnapshot | null = null
@@ -176,17 +176,17 @@ export function RepairexPreloader({
       markPageRevealSessionComplete(config)
 
       const root = rootRef.current
-      const composition = compositionRef.current
-      const track = trackRef.current
-      const panels = root
-        ? Array.from(
-            root.querySelectorAll<HTMLElement>('.repairex-preloader__panel'),
-          )
-        : []
-      if (root && composition && track) {
-        gsap.set([root, composition, track, ...panels], { clearProps: 'all' })
+      if (root) {
+        root.style.opacity = '0'
+        root.style.visibility = 'hidden'
+        root.style.pointerEvents = 'none'
       }
-      completeRef.current()
+      window.requestAnimationFrame(() => {
+        if (generation !== preloaderRuntime.generation) {
+          return
+        }
+        completeRef.current()
+      })
     }
 
     const prefersReducedMotion = window.matchMedia(
@@ -316,6 +316,8 @@ export function RepairexPreloader({
             },
             `-=${PRELOADER_TIMING.rootFadeOverlap}`,
           )
+
+          tl.set(root, { visibility: 'hidden', pointerEvents: 'none' })
         }, root)
 
         preloaderRuntime.activeContext = ctx

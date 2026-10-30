@@ -31,14 +31,15 @@
   --preloader-cols: 4;
 }
 
-/* Separators on shells so all three lines stay visible (incl. cols 2–3) */
-.repairex-preloader__panel-shell:not(:last-child) {
+/* Separators on panels (not shells) so lines exit with the slide-up animation */
+.repairex-preloader__panel-shell:not(:last-child) .repairex-preloader__panel {
   border-right: 1px solid rgba(216, 214, 201, 0.32);
 }
 
 .repairex-preloader__panel {
   width: 100%;
   height: 100%;
+  box-sizing: border-box;
   will-change: transform;
   background-color: #000000;
 }
