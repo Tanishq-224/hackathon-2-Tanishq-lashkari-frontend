@@ -14,7 +14,9 @@ import { cn } from '@/lib/utils'
 
 type PublicAccountActionsProps = {
   className?: string
-  appearance?: 'default' | 'pill' | 'bar' | 'primary'
+  appearance?: 'default' | 'pill' | 'bar' | 'primary' | 'mobileDrawer'
+  /** @description Called after navigation or logout from the mobile drawer variant. */
+  onMobileDrawerAction?: () => void
 }
 
 /**
@@ -25,6 +27,7 @@ type PublicAccountActionsProps = {
 export function PublicAccountActions({
   className,
   appearance = 'default',
+  onMobileDrawerAction,
 }: PublicAccountActionsProps) {
   const { isAuthenticated, user, isLoading } = useAuthSession()
   const [open, setOpen] = useState(false)
@@ -71,7 +74,12 @@ export function PublicAccountActions({
   if (isLoading) {
     return (
       <div
-        className={cn('h-8 w-20 animate-pulse rounded-full bg-white/10', className)}
+        className={cn(
+          appearance === 'mobileDrawer'
+            ? 'mx-auto h-32 w-full max-w-xs animate-pulse rounded-2xl bg-muted/60'
+            : 'h-8 w-20 animate-pulse rounded-full bg-white/10',
+          className,
+        )}
         aria-hidden
       />
     )
@@ -79,6 +87,46 @@ export function PublicAccountActions({
 
   if (isAuthenticated && user) {
     const initials = getProfileInitials(user.fullName)
+    const designation =
+      user.role === 'vendor' ? 'Verified Vendor' : 'Customer Account'
+
+    if (appearance === 'mobileDrawer') {
+      return (
+        <div className={cn('flex w-full flex-col items-center text-center', className)}>
+          <div className="flex size-16 items-center justify-center rounded-full border-2 border-primary/30 bg-primary text-h3 font-bold text-primary-foreground shadow-md">
+            {initials}
+          </div>
+          <p className="mt-3 max-w-full truncate font-display text-h3 font-semibold text-foreground">
+            {user.fullName}
+          </p>
+          <p className="mt-1 text-ui font-medium text-primary">{designation}</p>
+          <p className="mt-1 max-w-full truncate text-caption text-muted-foreground">
+            {user.email}
+          </p>
+          <div className="mt-5 flex w-full max-w-xs flex-col gap-2">
+            <Link
+              to="/dashboard"
+              onClick={() => onMobileDrawerAction?.()}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-ui font-semibold text-primary-foreground transition hover:bg-primary/90"
+            >
+              <LayoutDashboard className="size-4" aria-hidden />
+              Dashboard
+            </Link>
+            <button
+              type="button"
+              onClick={() => {
+                onMobileDrawerAction?.()
+                void handleLogout()
+              }}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-destructive/35 px-4 py-3 text-ui font-semibold text-destructive transition hover:bg-destructive/10"
+            >
+              <LogOut className="size-4" aria-hidden />
+              Log out
+            </button>
+          </div>
+        </div>
+      )
+    }
 
     return (
       <div ref={menuRef} className="relative inline-block text-left">
@@ -215,6 +263,27 @@ export function PublicAccountActions({
       >
         Log in
       </Link>
+    )
+  }
+
+  if (appearance === 'mobileDrawer') {
+    return (
+      <div className={cn('flex w-full flex-col items-center gap-2', className)}>
+        <Link
+          to="/login"
+          onClick={() => onMobileDrawerAction?.()}
+          className="inline-flex h-11 w-full max-w-xs items-center justify-center rounded-xl bg-primary px-5 text-ui font-semibold text-primary-foreground shadow-md transition hover:bg-primary/90"
+        >
+          Log in
+        </Link>
+        <Link
+          to="/signup"
+          onClick={() => onMobileDrawerAction?.()}
+          className="inline-flex h-11 w-full max-w-xs items-center justify-center rounded-xl border border-border px-5 text-ui font-semibold text-foreground transition hover:bg-muted"
+        >
+          Sign up
+        </Link>
+      </div>
     )
   }
 

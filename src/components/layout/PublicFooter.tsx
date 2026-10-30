@@ -1,8 +1,10 @@
-import { Mail, MapPin, Phone } from 'lucide-react'
+import { ChevronDown, Mail, MapPin, Phone } from 'lucide-react'
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 
 import { Container } from '@/components/shared/Container'
 import { useAuthSession } from '@/hooks/useAuthSession'
+import { useGsapAccordionPanel } from '@/hooks/useGsapAccordionPanel'
 import { SITE_CONTACT } from '@/lib/site-contact'
 import { cn } from '@/lib/utils'
 
@@ -17,17 +19,56 @@ const accountLinks = [
   { to: '/signup', label: 'Sign up' },
 ] as const
 
+type FooterLink = {
+  to: string
+  label: string
+  external?: boolean
+}
+
 type FooterLinkGroupProps = {
   title: string
-  links: readonly {
-    to: string
-    label: string
-    external?: boolean
-  }[]
+  links: readonly FooterLink[]
 }
 
 /**
- * @description Renders a titled column of footer navigation links.
+ * @description Shared list markup for footer navigation links.
+ * @param {object} props - Link entries and optional className.
+ * @returns {JSX.Element}
+ */
+function FooterLinksList({
+  links,
+  className,
+}: {
+  links: readonly FooterLink[]
+  className?: string
+}) {
+  return (
+    <ul className={cn('space-y-2.5', className)}>
+      {links.map(({ to, label, external }) => (
+        <li key={label}>
+          {external ? (
+            <a
+              href={to}
+              className="text-body text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {label}
+            </a>
+          ) : (
+            <Link
+              to={to}
+              className="text-body text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {label}
+            </Link>
+          )}
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+/**
+ * @description Renders a titled column of footer navigation links (tablet+).
  * @param {FooterLinkGroupProps} props - Column heading and link list.
  * @returns {JSX.Element} Footer link column.
  */
@@ -35,28 +76,49 @@ function FooterLinkGroup({ title, links }: FooterLinkGroupProps) {
   return (
     <div>
       <h2 className="text-ui font-semibold text-foreground">{title}</h2>
-      <ul className="mt-4 space-y-2.5">
-        {links.map(({ to, label, external }) => (
-          <li key={`${title}-${label}`}>
-            {external ? (
-              <a
-                href={to}
-                className="text-body text-muted-foreground transition-colors hover:text-foreground"
-              >
-                {label}
-              </a>
-            ) : (
-              <Link
-                to={to}
-                className="text-body text-muted-foreground transition-colors hover:text-foreground"
-              >
-                {label}
-              </Link>
-            )}
-          </li>
-        ))}
-      </ul>
+      <FooterLinksList links={links} className="mt-4" />
     </div>
+  )
+}
+
+/**
+ * @description Contact details list shared by mobile accordion and desktop column.
+ * @returns {JSX.Element}
+ */
+function FooterContactList({ className }: { className?: string }) {
+  return (
+    <ul
+      className={cn(
+        'space-y-2.5 text-caption text-muted-foreground',
+        className,
+      )}
+    >
+      <li>
+        <a
+          href={SITE_CONTACT.phoneHref}
+          className="inline-flex items-center gap-2 transition-colors hover:text-foreground"
+        >
+          <Phone aria-hidden className="size-3.5 shrink-0 text-primary" />
+          <span>{SITE_CONTACT.phoneDisplay}</span>
+        </a>
+      </li>
+      <li>
+        <a
+          href={SITE_CONTACT.emailHref}
+          className="inline-flex items-start gap-2 break-all transition-colors hover:text-foreground"
+        >
+          <Mail aria-hidden className="mt-0.5 size-3.5 shrink-0 text-primary" />
+          <span>{SITE_CONTACT.email}</span>
+        </a>
+      </li>
+      <li className="flex gap-2">
+        <MapPin aria-hidden className="mt-0.5 size-3.5 shrink-0 text-primary" />
+        <address className="not-italic leading-snug">
+          {SITE_CONTACT.addressShort}
+        </address>
+      </li>
+      <li className="leading-snug">{SITE_CONTACT.supportHours}</li>
+    </ul>
   )
 }
 
@@ -68,33 +130,136 @@ function FooterContactColumn() {
   return (
     <div>
       <h2 className="text-ui font-semibold text-foreground">Contact</h2>
-      <ul className="mt-4 space-y-2.5 text-caption text-muted-foreground">
-        <li>
-          <a
-            href={SITE_CONTACT.phoneHref}
-            className="inline-flex items-center gap-2 transition-colors hover:text-foreground"
-          >
-            <Phone aria-hidden className="size-3.5 shrink-0 text-primary" />
-            <span>{SITE_CONTACT.phoneDisplay}</span>
-          </a>
-        </li>
-        <li>
-          <a
-            href={SITE_CONTACT.emailHref}
-            className="inline-flex items-start gap-2 break-all transition-colors hover:text-foreground"
-          >
-            <Mail aria-hidden className="mt-0.5 size-3.5 shrink-0 text-primary" />
-            <span>{SITE_CONTACT.email}</span>
-          </a>
-        </li>
-        <li className="flex gap-2">
-          <MapPin aria-hidden className="mt-0.5 size-3.5 shrink-0 text-primary" />
-          <address className="not-italic leading-snug">
-            {SITE_CONTACT.addressShort}
-          </address>
-        </li>
-        <li className="pt-1 leading-snug">{SITE_CONTACT.supportHours}</li>
-      </ul>
+      <FooterContactList className="mt-4" />
+    </div>
+  )
+}
+
+type FooterAccordionRowProps = {
+  id: string
+  title: string
+  open: boolean
+  reducedMotion: boolean
+  onToggle: (id: string) => void
+  children: ReactNode
+}
+
+/**
+ * @description One footer nav section with GSAP height fade for open/close.
+ * @param {FooterAccordionRowProps} props - Section label, state, and panel content.
+ * @returns {JSX.Element}
+ */
+function FooterAccordionRow({
+  id,
+  title,
+  open,
+  reducedMotion,
+  onToggle,
+  children,
+}: FooterAccordionRowProps) {
+  const panelRef = useRef<HTMLDivElement>(null)
+  const innerRef = useRef<HTMLDivElement>(null)
+  const panelId = useId()
+
+  useGsapAccordionPanel(panelRef, innerRef, { open, reducedMotion })
+
+  return (
+    <div className="border-b border-border/80 px-4 last:border-b-0">
+      <button
+        type="button"
+        id={`${panelId}-trigger`}
+        aria-expanded={open}
+        aria-controls={panelId}
+        onClick={() => onToggle(id)}
+        className="flex w-full items-center justify-between gap-3 py-3.5 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      >
+        <span className="text-ui font-semibold text-foreground">{title}</span>
+        <ChevronDown
+          aria-hidden
+          className={cn(
+            'size-4 shrink-0 text-muted-foreground transition-transform duration-300 ease-out',
+            open && 'rotate-180',
+          )}
+        />
+      </button>
+      <div
+        id={panelId}
+        ref={panelRef}
+        role="region"
+        aria-labelledby={`${panelId}-trigger`}
+        hidden={!open && reducedMotion}
+        className="overflow-hidden"
+      >
+        <div ref={innerRef} className="pb-4">
+          {children}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+type FooterMobileNavAccordionProps = {
+  accountLinks: readonly FooterLink[]
+}
+
+/**
+ * @description Collapsible Explore / Account / Contact sections on small screens.
+ * @param {FooterMobileNavAccordionProps} props - Account links for auth state.
+ * @returns {JSX.Element}
+ */
+function FooterMobileNavAccordion({ accountLinks }: FooterMobileNavAccordionProps) {
+  const [openSections, setOpenSections] = useState<Set<string>>(() => new Set())
+  const [reducedMotion, setReducedMotion] = useState(false)
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const syncReducedMotion = () => setReducedMotion(mediaQuery.matches)
+    syncReducedMotion()
+    mediaQuery.addEventListener('change', syncReducedMotion)
+    return () => mediaQuery.removeEventListener('change', syncReducedMotion)
+  }, [])
+
+  const toggleSection = (sectionId: string) => {
+    setOpenSections((previous) => {
+      const next = new Set(previous)
+      if (next.has(sectionId)) {
+        next.delete(sectionId)
+      } else {
+        next.add(sectionId)
+      }
+      return next
+    })
+  }
+
+  return (
+    <div className="w-full overflow-hidden rounded-xl border border-border/80 sm:hidden">
+      <FooterAccordionRow
+        id="explore"
+        title="Explore"
+        open={openSections.has('explore')}
+        reducedMotion={reducedMotion}
+        onToggle={toggleSection}
+      >
+        <FooterLinksList links={exploreLinks} />
+      </FooterAccordionRow>
+      <FooterAccordionRow
+        id="account"
+        title="Account"
+        open={openSections.has('account')}
+        reducedMotion={reducedMotion}
+        onToggle={toggleSection}
+      >
+        <FooterLinksList links={accountLinks} />
+      </FooterAccordionRow>
+      <FooterAccordionRow
+        id="contact"
+        title="Contact"
+        open={openSections.has('contact')}
+        reducedMotion={reducedMotion}
+        onToggle={toggleSection}
+      >
+        <FooterContactList />
+      </FooterAccordionRow>
     </div>
   )
 }
@@ -172,18 +337,18 @@ function SocialLink({ href, label, icon }: SocialLinkProps) {
  */
 function FooterSocialLinks() {
   return (
-    <div className="mt-5 flex items-center gap-1">
-        <SocialLink href="https://twitter.com" label="Repairex on X" icon="x" />
-        <SocialLink
-          href="https://instagram.com"
-          label="Repairex on Instagram"
-          icon="instagram"
-        />
-        <SocialLink
-          href="https://linkedin.com"
-          label="Repairex on LinkedIn"
-          icon="linkedin"
-        />
+    <div className="mt-4 flex items-center gap-1 sm:mt-5">
+      <SocialLink href="https://twitter.com" label="Repairex on X" icon="x" />
+      <SocialLink
+        href="https://instagram.com"
+        label="Repairex on Instagram"
+        icon="instagram"
+      />
+      <SocialLink
+        href="https://linkedin.com"
+        label="Repairex on LinkedIn"
+        icon="linkedin"
+      />
     </div>
   )
 }
@@ -195,17 +360,17 @@ function FooterSocialLinks() {
 export function PublicFooter() {
   const { isAuthenticated } = useAuthSession()
 
-  const dynamicAccountLinks = isAuthenticated
-    ? ([
+  const dynamicAccountLinks: readonly FooterLink[] = isAuthenticated
+    ? [
         { to: '/dashboard', label: 'Dashboard' },
         { to: '/dashboard/new-repair', label: 'New Repair' },
-      ] as const)
+      ]
     : accountLinks
 
   return (
     <footer className="relative mt-auto overflow-hidden border-t border-border bg-background">
-      <Container className="relative z-10 pt-12 pb-6 sm:pt-14">
-        <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.55fr)] lg:gap-16">
+      <Container className="relative z-10 pt-8 pb-4 sm:pt-14 sm:pb-6">
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.55fr)] lg:gap-16">
           <div className="max-w-md">
             <Link
               to="/"
@@ -213,14 +378,16 @@ export function PublicFooter() {
             >
               Repairex
             </Link>
-            <p className="mt-3 max-w-xs text-body text-muted-foreground">
+            <p className="mt-2 max-w-xs text-body text-muted-foreground sm:mt-3">
               Compare repair estimates, approve final quotes, and track your device
               repair in one transparent marketplace workflow.
             </p>
             <FooterSocialLinks />
           </div>
 
-          <div className="grid gap-10 sm:grid-cols-3 sm:gap-8">
+          <FooterMobileNavAccordion accountLinks={dynamicAccountLinks} />
+
+          <div className="hidden gap-8 sm:grid sm:grid-cols-3 sm:gap-8">
             <FooterLinkGroup title="Explore" links={exploreLinks} />
             <FooterLinkGroup title="Account" links={dynamicAccountLinks} />
             <FooterContactColumn />
@@ -230,12 +397,12 @@ export function PublicFooter() {
 
       <div
         aria-hidden
-        className="relative z-0 flex justify-center overflow-hidden px-4 pb-2 pt-4 sm:pt-6"
+        className="relative z-0 flex justify-center overflow-hidden px-4 pb-0 pt-2 sm:pb-2 sm:pt-6"
       >
         <p
           className={cn(
-            'footer-brand-watermark font-display text-center text-[clamp(4.5rem,22vw,13.5rem)] font-bold leading-[0.85] tracking-tight',
-            'text-foreground/25 dark:text-foreground/20',
+            'footer-brand-watermark font-display text-center font-bold leading-[0.85] tracking-tight',
+            'text-[clamp(3.25rem,18vw,13.5rem)] text-foreground/25 dark:text-foreground/20',
           )}
         >
           Repairex
@@ -243,7 +410,7 @@ export function PublicFooter() {
       </div>
 
       <div className="relative z-10 border-t border-border/70">
-        <Container className="py-6 text-caption text-muted-foreground">
+        <Container className="py-4 text-caption text-muted-foreground sm:py-6">
           <p>© {new Date().getFullYear()} Repairex. Demo contact details for development.</p>
         </Container>
       </div>

@@ -13,6 +13,7 @@ import {
 } from '@/features/contact/lib/contact-form-schema'
 import { Button } from '@/components/ui/button'
 import { getApiErrorMessage } from '@/lib/api-client'
+import { SITE_CONTACT } from '@/lib/site-contact'
 import { cn } from '@/lib/utils'
 
 type FieldProps = {
@@ -209,7 +210,7 @@ export function ContactFormSection() {
                     id="contact-phone"
                     type="tel"
                     autoComplete="tel"
-                    placeholder="Your phone number"
+                    placeholder={SITE_CONTACT.phoneDisplay}
                     className={fieldClassName}
                     {...register('phone')}
                   />

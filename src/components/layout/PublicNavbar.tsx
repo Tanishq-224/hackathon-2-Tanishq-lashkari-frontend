@@ -54,7 +54,10 @@ export function PublicNavbar() {
           <PublicAccountActions appearance="bar" />
         </div>
 
-        <PublicMobileNavMenu key={pathname} />
+        <div className="flex items-center gap-2 md:hidden">
+          <ThemeToggle className="size-9 rounded-xl border-primary/35 bg-background/70 text-foreground dark:border-primary/45 dark:bg-white/5 dark:text-white" />
+          <PublicMobileNavMenu key={pathname} />
+        </div>
       </div>
     </header>
   )

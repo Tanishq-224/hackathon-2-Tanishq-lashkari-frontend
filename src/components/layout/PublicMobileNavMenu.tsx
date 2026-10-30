@@ -1,4 +1,4 @@
-import { Menu, X } from 'lucide-react'
+import { Check, Menu, X } from 'lucide-react'
 import {
   useCallback,
   useEffect,
@@ -11,7 +11,6 @@ import { NavLink } from 'react-router-dom'
 
 import { PublicAccountActions } from '@/components/layout/PublicAccountActions'
 import { PUBLIC_PRIMARY_NAV_LINKS } from '@/components/layout/public-nav-links'
-import { ThemeToggle } from '@/components/shared/ThemeToggle'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -29,10 +28,10 @@ type PublicMobileNavMenuProps = {
  */
 function mobileNavLinkClass({ isActive }: { isActive: boolean }) {
   return cn(
-    'public-mobile-nav-link block rounded-xl px-4 py-3.5 text-body font-medium transition-colors duration-200',
+    'public-mobile-nav-link flex items-center justify-between gap-3 rounded-xl px-4 py-3.5 text-body font-medium transition-all duration-200',
     isActive
-      ? 'bg-primary/15 text-foreground dark:bg-primary/20 dark:text-white'
-      : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground dark:text-white/80 dark:hover:bg-white/8 dark:hover:text-white',
+      ? 'bg-primary font-semibold text-primary-foreground shadow-[0_8px_24px_-8px] shadow-primary/50 ring-2 ring-primary/35'
+      : 'text-foreground/75 hover:bg-muted/90 hover:text-foreground dark:text-white/85 dark:hover:bg-white/10 dark:hover:text-white',
   )
 }
 
@@ -142,7 +141,7 @@ export function PublicMobileNavMenu({ className }: PublicMobileNavMenuProps) {
           type="button"
           aria-label="Close menu backdrop"
           className={cn(
-            'public-mobile-nav-backdrop fixed inset-x-0 bottom-0 top-[4.25rem] z-[var(--z-mobile-nav)] bg-black/40',
+            'public-mobile-nav-backdrop fixed inset-x-0 bottom-0 top-[4.25rem] z-[var(--z-mobile-nav)] bg-black/55 backdrop-blur-[2px]',
             open ? 'public-mobile-nav-backdrop--open' : 'public-mobile-nav-backdrop--closed',
           )}
           onClick={handleClose}
@@ -157,11 +156,11 @@ export function PublicMobileNavMenu({ className }: PublicMobileNavMenuProps) {
           aria-label="Mobile navigation"
           aria-hidden={!open}
           className={cn(
-            'public-mobile-nav-panel theme-navbar-bar fixed inset-x-3 top-[4.75rem] z-[calc(var(--z-mobile-nav)+1)] max-h-[min(32rem,calc(100dvh-5.5rem))] overflow-y-auto rounded-2xl border p-4 shadow-xl sm:inset-x-5',
+            'public-mobile-nav-panel theme-navbar-bar fixed inset-x-3 top-[4.75rem] z-[calc(var(--z-mobile-nav)+1)] max-h-[min(36rem,calc(100dvh-5.5rem))] overflow-y-auto rounded-2xl border border-border/90 bg-card/95 p-4 shadow-2xl backdrop-blur-xl sm:inset-x-5 dark:bg-[#2a2d33]/95',
             open ? 'public-mobile-nav-panel--open' : 'public-mobile-nav-panel--closed',
           )}
         >
-          <nav aria-label="Primary mobile" className="flex flex-col gap-1">
+          <nav aria-label="Primary mobile" className="flex flex-col gap-1.5">
             {PUBLIC_PRIMARY_NAV_LINKS.map(({ to, label, end }, index) => (
               <NavLink
                 key={to}
@@ -177,20 +176,26 @@ export function PublicMobileNavMenu({ className }: PublicMobileNavMenuProps) {
                 }
                 onClick={handleClose}
               >
-                {label}
+                {({ isActive }) => (
+                  <>
+                    <span>{label}</span>
+                    {isActive ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-primary-foreground/15 px-2 py-0.5 text-caption font-semibold text-primary-foreground">
+                        <Check aria-hidden className="size-3.5" strokeWidth={2.5} />
+                        Current
+                      </span>
+                    ) : null}
+                  </>
+                )}
               </NavLink>
             ))}
           </nav>
 
-          <div className="mt-4 flex items-center justify-between gap-3 border-t border-border/80 pt-4 dark:border-white/10">
-            <span className="text-ui font-medium text-muted-foreground">Theme</span>
-            <ThemeToggle className="rounded-xl border-primary/35 bg-background/70 dark:border-primary/45 dark:bg-white/5" />
-          </div>
-
-          <div className="mt-4">
+          <div className="mt-5 border-t border-border/80 pt-5 dark:border-white/10">
             <PublicAccountActions
-              appearance="primary"
-              className="flex w-full justify-center px-5"
+              appearance="mobileDrawer"
+              className="w-full"
+              onMobileDrawerAction={handleClose}
             />
           </div>
         </div>
