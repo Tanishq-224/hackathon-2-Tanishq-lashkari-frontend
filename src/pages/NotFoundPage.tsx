@@ -5,7 +5,7 @@ import notFoundBackground from '@/assets/not-found-background.jpg'
 import './not-found-page.css'
 
 /**
- * @description Branded 404 with reference layout, glass UI, and public chrome.
+ * @description Full-viewport 404 with wallpaper background and public chrome.
  * @returns {JSX.Element}
  */
 export function NotFoundPage() {
@@ -15,39 +15,36 @@ export function NotFoundPage() {
       role="main"
       aria-labelledby="not-found-title"
     >
-      <div className="not-found-page__backdrop" aria-hidden>
+      <div className="not-found-page__media" aria-hidden>
         <img
-          className="not-found-page__backdrop-image"
+          className="not-found-page__image"
           src={notFoundBackground}
           alt=""
           fetchPriority="high"
+          decoding="async"
         />
-        <div className="not-found-page__vignette" />
       </div>
 
-      <div className="not-found-page__inner">
-        <Link to="/" className="not-found-page__badge not-found-glass">
-          <span className="not-found-page__badge-mark" aria-hidden>
-            R
-          </span>
-          Repairex
-        </Link>
+      <div className="not-found-page__content">
+        <div className="not-found-page__hero">
+          <h1 id="not-found-title" className="not-found-page__headline">
+            <span className="not-found-page__code">404</span>
+            <span className="not-found-page__title">Page Not Found!</span>
+          </h1>
+        </div>
 
-        <div className="not-found-page__glass-panel not-found-glass">
-          <div className="not-found-page__hero">
-            <p className="not-found-page__code" aria-hidden>
-              404
-            </p>
-            <h1 id="not-found-title" className="not-found-page__title">
-              Page Not Found!
-            </h1>
-          </div>
+        <p className="not-found-page__lede">
+          The link may be broken or the page may have moved. Head back home or
+          reach out if you need help.
+        </p>
 
-          <div className="not-found-page__cta-wrap">
-            <Link to="/" className="not-found-page__cta">
-              Back home
-            </Link>
-          </div>
+        <div className="not-found-page__actions">
+          <Link to="/" className="not-found-page__cta not-found-page__cta--primary">
+            Back to home
+          </Link>
+          <Link to="/contact" className="not-found-page__cta not-found-page__cta--ghost">
+            Contact us
+          </Link>
         </div>
       </div>
     </main>

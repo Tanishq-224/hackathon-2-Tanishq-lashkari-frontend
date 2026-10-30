@@ -36,7 +36,11 @@ export function createAppRouter() {
         { path: 'forgot-password', element: <ForgotPasswordPage /> },
         { path: 'verify-otp', element: <VerifyOtpPage /> },
         { path: 'reset-password', element: <ResetPasswordPage /> },
-        { path: '*', element: <NotFoundPage /> },
+        {
+          path: '*',
+          element: <NotFoundPage />,
+          handle: { layout: 'not-found' as const },
+        },
       ],
     },
     {

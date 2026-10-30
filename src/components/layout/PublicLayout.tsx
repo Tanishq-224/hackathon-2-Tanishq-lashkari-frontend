@@ -1,4 +1,4 @@
-import { Outlet, useLocation } from 'react-router-dom'
+import { Outlet, useLocation, useMatches } from 'react-router-dom'
 
 import { LenisScrollProvider } from '@/components/layout/LenisScrollProvider'
 import { PublicFooter } from '@/components/layout/PublicFooter'
@@ -12,8 +12,16 @@ import { cn } from '@/lib/utils'
  * @description Layout wrapper for Home, About, and Contact public routes.
  * @returns {JSX.Element} Navbar, page outlet, and footer.
  */
+type PublicRouteHandle = {
+  layout?: 'not-found'
+}
+
 export function PublicLayout() {
   const { pathname } = useLocation()
+  const matches = useMatches()
+  const isNotFoundPage = matches.some(
+    (match) => (match.handle as PublicRouteHandle | undefined)?.layout === 'not-found',
+  )
   const isHome = pathname === '/'
   const isAuthPage =
     pathname === '/login' ||
@@ -26,12 +34,18 @@ export function PublicLayout() {
     <LenisScrollProvider>
       <PageRevealGate>
         <RouteScrollReset />
-        <div className="flex min-h-screen flex-col bg-background text-foreground">
+        <div
+          className={cn(
+            'flex min-h-screen flex-col text-foreground',
+            isNotFoundPage ? 'bg-black' : 'bg-background',
+          )}
+        >
           <PublicNavbar />
           <div
             className={cn(
               'flex flex-1 flex-col',
-              !isHome &&
+              !isNotFoundPage &&
+                !isHome &&
                 pathname !== '/about' &&
                 pathname !== '/contact' &&
                 !isAuthPage &&
@@ -40,7 +54,9 @@ export function PublicLayout() {
           >
             <Outlet />
           </div>
-          <PublicFooter />
+          <div className={cn(isNotFoundPage && 'relative z-[2]')}>
+            <PublicFooter />
+          </div>
           <ScrollToTopButton />
         </div>
       </PageRevealGate>
