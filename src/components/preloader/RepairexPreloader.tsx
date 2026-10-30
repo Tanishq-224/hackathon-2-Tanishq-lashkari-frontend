@@ -29,6 +29,20 @@ type BodyScrollSnapshot = {
 
 const PANEL_TONES = ['1', '2', '3', '4'] as const
 
+/** Tuned for ~4s total (4 words + 4 panel exit on desktop). */
+const PRELOADER_TIMING = {
+  textFadeIn: 1,
+  wordScrollDuration: 0.55,
+  wordScrollFirstOverlap: 0.85,
+  wordScrollGap: 0.15,
+  pauseBeforeExit: 0.2,
+  textFadeOut: 0.35,
+  panelDuration: 0.45,
+  panelStagger: 0.08,
+  rootFadeOut: 0.12,
+  rootFadeOverlap: 0.08,
+} as const
+
 let bodySnapshot: BodyScrollSnapshot | null = null
 
 const preloaderRuntime = {
@@ -247,7 +261,7 @@ export function RepairexPreloader({
 
           tl.to(composition, {
             opacity: 1,
-            duration: 1.5,
+            duration: PRELOADER_TIMING.textFadeIn,
             ease: 'sine.out',
           })
 
@@ -257,23 +271,23 @@ export function RepairexPreloader({
               track,
               {
                 y: targetY,
-                duration: 0.85,
+                duration: PRELOADER_TIMING.wordScrollDuration,
                 ease: index === 0 ? 'power3.out' : 'power3.inOut',
               },
-              index === 0 ? '-=1.25' : '+=0.28',
+              index === 0
+                ? `-=${PRELOADER_TIMING.wordScrollFirstOverlap}`
+                : `+=${PRELOADER_TIMING.wordScrollGap}`,
             )
           }
 
-          tl.to({}, { duration: 0.35 })
+          tl.to({}, { duration: PRELOADER_TIMING.pauseBeforeExit })
 
           tl.to(composition, {
             opacity: 0,
-            duration: 0.55,
+            duration: PRELOADER_TIMING.textFadeOut,
             ease: 'sine.inOut',
           })
 
-          const panelDuration = 0.7
-          const panelOffset = 0.15
           tl.addLabel('panelExit')
           panelExitOrder.forEach((panelIndex, sequenceIndex) => {
             const panel = panels[panelIndex]
@@ -284,12 +298,12 @@ export function RepairexPreloader({
               panel,
               {
                 yPercent: -100,
-                duration: panelDuration,
+                duration: PRELOADER_TIMING.panelDuration,
                 ease: 'power4.inOut',
               },
               sequenceIndex === 0
                 ? 'panelExit'
-                : `panelExit+=${panelOffset * sequenceIndex}`,
+                : `panelExit+=${PRELOADER_TIMING.panelStagger * sequenceIndex}`,
             )
           })
 
@@ -297,10 +311,10 @@ export function RepairexPreloader({
             root,
             {
               opacity: 0,
-              duration: 0.2,
+              duration: PRELOADER_TIMING.rootFadeOut,
               ease: 'power1.out',
             },
-            '-=0.15',
+            `-=${PRELOADER_TIMING.rootFadeOverlap}`,
           )
         }, root)
 
