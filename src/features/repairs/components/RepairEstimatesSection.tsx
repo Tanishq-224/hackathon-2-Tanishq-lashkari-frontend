@@ -1,27 +1,36 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
   CheckCircle,
+  ChevronRight,
   Clock,
   Loader2,
-  Send,
+  Pencil,
   ShieldCheck,
   Store,
   UserCheck,
+  XCircle,
 } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { Button, buttonVariants } from '@/components/ui/button'
 import {
   fetchRepairEstimates,
+  rejectEstimateRequest,
   repairDetailQueryKey,
   repairEstimatesQueryKey,
   selectEstimateRequest,
-  submitEstimateRequest,
+  withdrawEstimateRequest,
   type EstimateItem,
   type RepairItem,
 } from '@/features/repairs/api/repairsApi'
+import {
+  estimateStatusLabel,
+  isEstimateActionable,
+} from '@/features/repairs/lib/estimate-status'
+import { useAppToast } from '@/components/shared/AppToastProvider'
 import { getApiErrorMessage } from '@/lib/api-client'
+import { formatUsd } from '@/lib/format-money'
 import { cn } from '@/lib/utils'
 
 type RepairEstimatesSectionProps = {
@@ -30,22 +39,29 @@ type RepairEstimatesSectionProps = {
   userId?: string
 }
 
+function estimateTotalLabel(estimate: EstimateItem): string {
+  const hasBreakdown = estimate.componentLines && estimate.componentLines.length > 0
+  if (hasBreakdown) {
+    const parts = estimate.componentLines!.reduce((sum, line) => sum + line.price, 0)
+    const total = parts + (estimate.labourCost ?? 0)
+    return formatUsd(total)
+  }
+  if (estimate.minCost === estimate.maxCost) {
+    return formatUsd(estimate.minCost)
+  }
+  return `${formatUsd(estimate.minCost)} – ${formatUsd(estimate.maxCost)}`
+}
+
 export function RepairEstimatesSection({
   repair,
   userRole,
   userId,
 }: RepairEstimatesSectionProps) {
   const queryClient = useQueryClient()
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [successMessage, setSuccessMessage] = useState<string | null>(null)
-
-  // Vendor Submit Estimate form states
-  const [minCost, setMinCost] = useState('')
-  const [maxCost, setMaxCost] = useState('')
-  const [turnaroundTime, setTurnaroundTime] = useState('24 Hours')
-  const [warrantyMonths, setWarrantyMonths] = useState('6')
-  const [notes, setNotes] = useState('')
-  const [isSubmittingEstimate, setIsSubmittingEstimate] = useState(false)
+  const { pushError, pushSuccess } = useAppToast()
+  const [, setSuccessMessage] = useState<string | null>(null)
+  const [rejectingId, setRejectingId] = useState<string | null>(null)
+  const [rejectReason, setRejectReason] = useState('')
 
   const { data: estimates = [], isLoading } = useQuery({
     queryKey: repairEstimatesQueryKey(repair.id),
@@ -56,212 +72,107 @@ export function RepairEstimatesSection({
     mutationFn: (estimateId: string) => selectEstimateRequest(repair.id, estimateId),
     onSuccess: () => {
       setSuccessMessage('Estimate accepted! The technician has been assigned to your repair.')
+      pushSuccess('Technician assigned to this repair.')
       void queryClient.invalidateQueries({ queryKey: repairDetailQueryKey(repair.id) })
       void queryClient.invalidateQueries({ queryKey: repairEstimatesQueryKey(repair.id) })
     },
     onError: (err) => {
-      setErrorMessage(getApiErrorMessage(err))
+      pushError(getApiErrorMessage(err))
     },
   })
 
-  async function handleVendorSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setErrorMessage(null)
-    setSuccessMessage(null)
-
-    const min = parseFloat(minCost)
-    const max = parseFloat(maxCost)
-    const warranty = parseInt(warrantyMonths, 10)
-
-    if (isNaN(min) || min <= 0) {
-      setErrorMessage('Please enter a valid minimum estimated price.')
-      return
-    }
-    if (isNaN(max) || max < min) {
-      setErrorMessage('Maximum estimated price must be greater than or equal to minimum price.')
-      return
-    }
-    if (!turnaroundTime.trim()) {
-      setErrorMessage('Please specify an estimated turnaround time (e.g. 24 Hours).')
-      return
-    }
-    if (notes.trim().length < 5) {
-      setErrorMessage('Please provide a brief repair plan note (at least 5 characters).')
-      return
-    }
-
-    setIsSubmittingEstimate(true)
-    try {
-      await submitEstimateRequest(repair.id, {
-        minCost: min,
-        maxCost: max,
-        turnaroundTime: turnaroundTime.trim(),
-        warrantyMonths: isNaN(warranty) ? 3 : warranty,
-        notes: notes.trim(),
-      })
-      setSuccessMessage('Your estimate has been submitted to the customer!')
-      setMinCost('')
-      setMaxCost('')
-      setNotes('')
-      void queryClient.invalidateQueries({ queryKey: repairDetailQueryKey(repair.id) })
+  const rejectMutation = useMutation({
+    mutationFn: ({ estimateId, reason }: { estimateId: string; reason?: string }) =>
+      rejectEstimateRequest(repair.id, estimateId, reason),
+    onSuccess: () => {
+      pushSuccess('Estimate rejected.')
+      setRejectingId(null)
+      setRejectReason('')
       void queryClient.invalidateQueries({ queryKey: repairEstimatesQueryKey(repair.id) })
-    } catch (err) {
-      setErrorMessage(getApiErrorMessage(err))
-    } finally {
-      setIsSubmittingEstimate(false)
-    }
-  }
+    },
+    onError: (err) => pushError(getApiErrorMessage(err)),
+  })
+
+  const withdrawMutation = useMutation({
+    mutationFn: (estimateId: string) => withdrawEstimateRequest(repair.id, estimateId),
+    onSuccess: () => {
+      pushSuccess('Your estimate was withdrawn.')
+      void queryClient.invalidateQueries({ queryKey: repairEstimatesQueryKey(repair.id) })
+      void queryClient.invalidateQueries({ queryKey: ['marketplace'] })
+    },
+    onError: (err) => pushError(getApiErrorMessage(err)),
+  })
 
   const isCustomerOwner = userRole === 'customer'
   const isVendor = userRole === 'vendor'
-  const canSelectEstimate =
-    isCustomerOwner && (repair.status === 'submitted' || repair.status === 'estimated')
-  const alreadySubmittedByMe =
-    isVendor && estimates.some((e) => e.vendorId === userId)
+  const myActiveEstimate = estimates.find(
+    (e) => e.vendorId === userId && (e.status === 'pending' || e.status === 'accepted'),
+  )
   const canVendorSubmit =
     isVendor &&
-    !alreadySubmittedByMe &&
+    !myActiveEstimate &&
     (repair.status === 'submitted' || repair.status === 'estimated')
+  const canSelectEstimate =
+    isCustomerOwner && (repair.status === 'submitted' || repair.status === 'estimated')
 
   return (
     <div className="space-y-6">
-      {errorMessage && (
-        <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-ui text-destructive">
-          {errorMessage}
-        </div>
-      )}
-
-      {successMessage && (
-        <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-ui text-emerald-400">
-          {successMessage}
-        </div>
-      )}
-
-      {/* Vendor: Submit Estimate Card */}
-      {canVendorSubmit && (
-        <div className="rounded-2xl border border-primary/30 bg-card p-6 shadow-sm">
-          <div className="flex items-center gap-2.5 text-primary">
-            <Store className="h-5 w-5" />
-            <h3 className="font-display text-h3 font-semibold text-foreground">
-              Submit Repair Estimate
-            </h3>
-          </div>
-          <p className="mt-1 text-ui text-muted-foreground">
-            Provide a price range, turnaround speed, and repair breakdown for this ticket.
-          </p>
-
-          <form onSubmit={handleVendorSubmit} className="mt-5 space-y-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label className="text-caption font-medium text-foreground">
-                  Min Estimated Price ($) *
-                </label>
-                <div className="relative mt-1">
-                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">
-                    $
-                  </span>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="1"
-                    value={minCost}
-                    onChange={(e) => setMinCost(e.target.value)}
-                    placeholder="80"
-                    className="pl-7"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-caption font-medium text-foreground">
-                  Max Estimated Price ($) *
-                </label>
-                <div className="relative mt-1">
-                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">
-                    $
-                  </span>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="1"
-                    value={maxCost}
-                    onChange={(e) => setMaxCost(e.target.value)}
-                    placeholder="120"
-                    className="pl-7"
-                    required
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label className="text-caption font-medium text-foreground">
-                  Estimated Turnaround *
-                </label>
-                <Input
-                  type="text"
-                  value={turnaroundTime}
-                  onChange={(e) => setTurnaroundTime(e.target.value)}
-                  placeholder="e.g. 24 Hours, Same-Day, 2 Days"
-                  className="mt-1"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="text-caption font-medium text-foreground">
-                  Warranty (Months)
-                </label>
-                <Input
-                  type="number"
-                  min="0"
-                  max="60"
-                  value={warrantyMonths}
-                  onChange={(e) => setWarrantyMonths(e.target.value)}
-                  placeholder="6"
-                  className="mt-1"
-                />
-              </div>
-            </div>
-
+      {isVendor && myActiveEstimate?.status === 'pending' ? (
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <label className="text-caption font-medium text-foreground">
-                Repair Plan & Parts Notes *
-              </label>
-              <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                rows={3}
-                placeholder="e.g. OEM display replacement, adhesive reseal, touchscreen calibration included."
-                className="mt-1 w-full rounded-xl border border-input bg-background p-3 text-ui text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                required
-              />
+              <h3 className="font-display text-h3 font-semibold text-foreground">
+                Your pending estimate
+              </h3>
+              <p className="mt-1 text-ui text-muted-foreground">
+                Edit itemized lines or withdraw if you no longer want to bid on this ticket.
+              </p>
             </div>
-
-            <Button
-              type="submit"
-              disabled={isSubmittingEstimate}
-              className="flex items-center gap-2"
-            >
-              {isSubmittingEstimate ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Submitting...</span>
-                </>
-              ) : (
-                <>
-                  <Send className="h-4 w-4" />
-                  <span>Send Estimate to Customer</span>
-                </>
-              )}
-            </Button>
-          </form>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                to={`/dashboard/marketplace/${repair.id}/estimate`}
+                className={buttonVariants({ variant: 'outline' })}
+              >
+                <Pencil className="mr-1.5 size-4" aria-hidden />
+                Edit estimate
+              </Link>
+              <Button
+                variant="outline"
+                disabled={withdrawMutation.isPending}
+                onClick={() => withdrawMutation.mutate(myActiveEstimate.id)}
+                className="text-rose-600 hover:bg-rose-500/10"
+              >
+                Withdraw
+              </Button>
+            </div>
+          </div>
         </div>
-      )}
+      ) : null}
 
-      {/* Estimates List Section */}
+      {canVendorSubmit ? (
+        <div className="rounded-2xl border border-primary/30 bg-card p-6 shadow-sm">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="flex items-center gap-2.5 text-primary">
+                <Store className="h-5 w-5" />
+                <h3 className="font-display text-h3 font-semibold text-foreground">
+                  Submit itemized estimate
+                </h3>
+              </div>
+              <p className="mt-1 text-ui text-muted-foreground">
+                Open the full dashboard form to add components, labour, and notes.
+              </p>
+            </div>
+            <Link
+              to={`/dashboard/marketplace/${repair.id}/estimate`}
+              className={buttonVariants({ className: 'w-full sm:w-auto' })}
+            >
+              Open estimate form
+            </Link>
+          </div>
+        </div>
+      ) : null}
+
       <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
         <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
           <div>
@@ -269,15 +180,15 @@ export function RepairEstimatesSection({
               Technician Estimates & Proposals ({estimates.length})
             </h2>
             <p className="mt-0.5 text-caption text-muted-foreground">
-              Review quotes submitted by certified repair shops.
+              Tap a proposal to open the full itemized report in your dashboard.
             </p>
           </div>
-          {repair.assignedVendorName && (
+          {repair.assignedVendorName ? (
             <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-3 py-1 text-caption font-semibold text-emerald-400">
               <UserCheck className="h-3.5 w-3.5" />
               <span>Assigned: {repair.assignedVendorName}</span>
             </div>
-          )}
+          ) : null}
         </div>
 
         {isLoading ? (
@@ -292,84 +203,168 @@ export function RepairEstimatesSection({
             </h3>
             <p className="mt-1 text-caption text-muted-foreground">
               {isVendor
-                ? 'Be the first technician to submit an estimate for this customer request!'
-                : 'Technicians in the marketplace are reviewing your ticket details. Estimates usually appear within a few hours.'}
+                ? 'Be the first technician to submit an itemized estimate for this ticket.'
+                : 'Technicians are reviewing your ticket. Itemized estimates will appear here.'}
             </p>
           </div>
         ) : (
           <div className="mt-6 space-y-4">
-            {estimates.map((est: EstimateItem) => {
+            {estimates.map((est) => {
               const isAccepted = est.status === 'accepted'
+              const statusLabel = estimateStatusLabel(est.status)
+              const actionable = isEstimateActionable(est.status)
+              const componentPreview =
+                est.componentLines && est.componentLines.length > 0
+                  ? est.componentLines
+                      .slice(0, 2)
+                      .map((line) => line.component)
+                      .join(' · ')
+                  : est.notes
+
               return (
                 <div
                   key={est.id}
                   className={cn(
-                    'relative rounded-xl border p-5 transition-all',
+                    'relative overflow-hidden rounded-xl border transition-all',
                     isAccepted
                       ? 'border-emerald-500/60 bg-emerald-500/5 shadow-sm'
-                      : 'border-border bg-secondary/30 hover:border-border/80',
+                      : actionable
+                        ? 'border-border bg-secondary/30 hover:border-primary/40'
+                        : 'border-border/70 bg-secondary/15 opacity-90',
                   )}
                 >
-                  <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2.5">
-                        <span className="font-display text-base font-bold text-foreground">
-                          {est.vendorName}
-                        </span>
-                        <span className="rounded-md bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
-                          Certified Technician
-                        </span>
-                        {isAccepted && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-400">
-                            <CheckCircle className="h-3 w-3" />
-                            Accepted Vendor
+                  <Link
+                    to={`/dashboard/repairs/${repair.id}/estimates/${est.id}`}
+                    className="group block p-5 pr-12 transition hover:bg-secondary/40"
+                  >
+                    <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap items-center gap-2.5">
+                          <span className="font-display text-base font-bold text-foreground">
+                            {est.vendorName}
                           </span>
-                        )}
+                          <span className="rounded-md bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                            Certified Technician
+                          </span>
+                          {isAccepted ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-400">
+                              <CheckCircle className="h-3 w-3" />
+                              Accepted Vendor
+                            </span>
+                          ) : null}
+                          {statusLabel ? (
+                            <span className="rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-semibold text-muted-foreground">
+                              {statusLabel}
+                            </span>
+                          ) : null}
+                        </div>
+
+                        <p className="line-clamp-2 text-ui leading-relaxed text-foreground/90">
+                          {componentPreview}
+                        </p>
+
+                        <div className="flex flex-wrap items-center gap-4 text-caption text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            <Clock className="h-3.5 w-3.5 text-primary" />
+                            <span>
+                              Turnaround:{' '}
+                              <strong className="text-foreground">{est.turnaroundTime}</strong>
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+                            <span>
+                              Warranty:{' '}
+                              <strong className="text-foreground">
+                                {est.warrantyMonths} Months
+                              </strong>
+                            </span>
+                          </div>
+                        </div>
                       </div>
 
-                      <p className="text-ui leading-relaxed text-foreground/90">
-                        {est.notes}
-                      </p>
-
-                      <div className="flex flex-wrap items-center gap-4 text-caption text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Clock className="h-3.5 w-3.5 text-primary" />
-                          <span>Turnaround: <strong className="text-foreground">{est.turnaroundTime}</strong></span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <ShieldCheck className="h-3.5 w-3.5 text-primary" />
-                          <span>Warranty: <strong className="text-foreground">{est.warrantyMonths} Months</strong></span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col items-start gap-3 sm:items-end sm:shrink-0">
                       <div className="text-left sm:text-right">
                         <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                          Estimated Cost
+                          Estimated total
                         </p>
                         <p className="font-display text-h3 font-bold text-primary">
-                          ${est.minCost} - ${est.maxCost}
+                          {estimateTotalLabel(est)}
                         </p>
+                        <span className="mt-2 inline-flex items-center gap-1 text-caption font-semibold text-primary">
+                          View full report
+                          <ChevronRight className="size-4 transition group-hover:translate-x-0.5" />
+                        </span>
                       </div>
+                    </div>
+                  </Link>
 
-                      {canSelectEstimate && (
+                  {canSelectEstimate && actionable ? (
+                    <div className="space-y-3 border-t border-border/80 px-5 py-3">
+                      {rejectingId === est.id ? (
+                        <div className="space-y-2 rounded-lg border border-border bg-background p-3">
+                          <label className="text-caption font-medium text-foreground">
+                            Reason (optional)
+                          </label>
+                          <textarea
+                            rows={2}
+                            value={rejectReason}
+                            onChange={(e) => setRejectReason(e.target.value)}
+                            className="w-full rounded-md border border-border bg-background p-2 text-ui"
+                            placeholder="e.g. Price too high, prefer another technician…"
+                          />
+                          <div className="flex flex-wrap gap-2">
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              disabled={rejectMutation.isPending}
+                              onClick={() =>
+                                rejectMutation.mutate({
+                                  estimateId: est.id,
+                                  reason: rejectReason.trim() || undefined,
+                                })
+                              }
+                            >
+                              Confirm reject
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                setRejectingId(null)
+                                setRejectReason('')
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      ) : null}
+                      <div className="flex flex-wrap gap-2">
                         <Button
                           size="sm"
                           disabled={selectMutation.isPending}
                           onClick={() => selectMutation.mutate(est.id)}
-                          className="flex items-center gap-1.5"
                         >
                           {selectMutation.isPending ? (
                             <Loader2 className="h-3.5 w-3.5 animate-spin" />
                           ) : (
                             <CheckCircle className="h-3.5 w-3.5" />
                           )}
-                          <span>Accept & Assign</span>
+                          <span className="ml-1.5">Accept & Assign</span>
                         </Button>
-                      )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={rejectMutation.isPending}
+                          onClick={() => setRejectingId(est.id)}
+                          className="text-rose-600 hover:bg-rose-500/10"
+                        >
+                          <XCircle className="h-3.5 w-3.5" />
+                          <span className="ml-1.5">Reject</span>
+                        </Button>
+                      </div>
                     </div>
-                  </div>
+                  ) : null}
                 </div>
               )
             })}

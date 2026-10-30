@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useState } from 'react'
+import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
@@ -13,6 +13,7 @@ import { GoogleSignInButton } from '@/features/auth/components/GoogleSignInButto
 import { PasswordField } from '@/features/auth/components/PasswordField'
 import { loginSchema, type LoginFormValues } from '@/features/auth/lib/auth-schemas'
 import { authSessionQueryKey } from '@/hooks/useAuthSession'
+import { useAppToast } from '@/components/shared/AppToastProvider'
 import { getApiErrorMessage } from '@/lib/api-client'
 import { cn } from '@/lib/utils'
 
@@ -25,7 +26,13 @@ export function LoginPage() {
   const queryClient = useQueryClient()
   const [searchParams] = useSearchParams()
   const oauthError = searchParams.get('error')
-  const [formError, setFormError] = useState<string | null>(oauthError)
+  const { pushError } = useAppToast()
+
+  useEffect(() => {
+    if (oauthError) {
+      pushError(oauthError.replace(/_/g, ' '))
+    }
+  }, [oauthError, pushError])
 
   const {
     register,
@@ -44,14 +51,13 @@ export function LoginPage() {
    * @returns {Promise<void>}
    */
   async function onSubmit(values: LoginFormValues) {
-    setFormError(null)
     try {
       await loginRequest(values)
       await queryClient.invalidateQueries({ queryKey: authSessionQueryKey })
       void navigate('/')
     } catch (error) {
       const message = getApiErrorMessage(error)
-      setFormError(message)
+      pushError(message)
       if (message.toLowerCase().includes('verify your email')) {
         void navigate(
           `/verify-otp?email=${encodeURIComponent(values.email)}&purpose=signup`,
@@ -85,7 +91,7 @@ export function LoginPage() {
     >
       <div className="space-y-5">
         {/* Google Identity Services Sign-In Button */}
-        <GoogleSignInButton onError={setFormError} />
+        <GoogleSignInButton onError={pushError} />
 
         {/* Clean Flex Separator */}
         <div className="flex items-center gap-3 py-1">
@@ -140,12 +146,6 @@ export function LoginPage() {
               registration={register('password')}
             />
           </div>
-
-          {formError ? (
-            <p className="rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-body text-destructive">
-              {formError}
-            </p>
-          ) : null}
 
           <Button
             type="submit"

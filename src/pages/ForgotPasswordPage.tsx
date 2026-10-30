@@ -1,5 +1,4 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
 
@@ -12,6 +11,7 @@ import {
   forgotPasswordSchema,
   type ForgotPasswordFormValues,
 } from '@/features/auth/lib/auth-schemas'
+import { useAppToast } from '@/components/shared/AppToastProvider'
 import { getApiErrorMessage } from '@/lib/api-client'
 import { cn } from '@/lib/utils'
 
@@ -21,8 +21,7 @@ import { cn } from '@/lib/utils'
  */
 export function ForgotPasswordPage() {
   const navigate = useNavigate()
-  const [status, setStatus] = useState<string | null>(null)
-  const [formError, setFormError] = useState<string | null>(null)
+  const { pushError, pushSuccess } = useAppToast()
 
   const {
     register,
@@ -40,16 +39,14 @@ export function ForgotPasswordPage() {
    * @returns {Promise<void>}
    */
   async function onSubmit(values: ForgotPasswordFormValues) {
-    setFormError(null)
-    setStatus(null)
     try {
       const response = await forgotPasswordRequest(values.email)
-      setStatus(response.message)
+      pushSuccess(response.message)
       void navigate(
         `/verify-otp?email=${encodeURIComponent(values.email)}&purpose=reset`,
       )
     } catch (error) {
-      setFormError(getApiErrorMessage(error))
+      pushError(getApiErrorMessage(error))
     }
   }
 
@@ -96,18 +93,6 @@ export function ForgotPasswordPage() {
             <p className="text-caption text-destructive">{errors.email.message}</p>
           ) : null}
         </div>
-
-        {status ? (
-          <p className="rounded-xl border border-primary/30 bg-primary/10 px-4 py-3 text-body text-foreground">
-            {status}
-          </p>
-        ) : null}
-
-        {formError ? (
-          <p className="rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-body text-destructive">
-            {formError}
-          </p>
-        ) : null}
 
         <Button
           type="submit"

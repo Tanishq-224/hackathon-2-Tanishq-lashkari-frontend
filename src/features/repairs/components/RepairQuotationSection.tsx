@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import {
-  AlertCircle,
   CheckCircle,
   Clock,
   FileText,
@@ -22,10 +21,12 @@ import {
   repairDetailQueryKey,
   repairQuotationQueryKey,
   submitDiagnosisRequest,
+  withdrawQuotationRequest,
   type LineItemCategory,
   type QuotationLineItem,
   type RepairItem,
 } from '@/features/repairs/api/repairsApi'
+import { useAppToast } from '@/components/shared/AppToastProvider'
 import { getApiErrorMessage } from '@/lib/api-client'
 import { formatUsd } from '@/lib/format-money'
 import { cn } from '@/lib/utils'
@@ -42,8 +43,8 @@ export function RepairQuotationSection({
   userId,
 }: RepairQuotationSectionProps) {
   const queryClient = useQueryClient()
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const { pushError, pushSuccess, pushWarning } = useAppToast()
+  const [isEditingQuotation, setIsEditingQuotation] = useState(false)
 
   // Vendor quotation form states
   const [diagnosticFindings, setDiagnosticFindings] = useState('')
@@ -79,29 +80,55 @@ export function RepairQuotationSection({
         estimatedCompletion,
       }),
     onSuccess: () => {
-      setSuccessMessage('Diagnostic findings and quotation submitted to customer successfully!')
+      pushSuccess('Quotation sent to the customer for approval.')
+      setIsEditingQuotation(false)
       void queryClient.invalidateQueries({ queryKey: repairDetailQueryKey(repair.id) })
       void queryClient.invalidateQueries({ queryKey: repairQuotationQueryKey(repair.id) })
     },
-    onError: (err) => {
-      setErrorMessage(getApiErrorMessage(err))
+    onError: (err) => pushError(getApiErrorMessage(err)),
+  })
+
+  const withdrawQuotationMutation = useMutation({
+    mutationFn: () => withdrawQuotationRequest(repair.id),
+    onSuccess: (data) => {
+      pushSuccess(data.message ?? 'Quotation withdrawn.')
+      setIsEditingQuotation(false)
+      void queryClient.invalidateQueries({ queryKey: repairDetailQueryKey(repair.id) })
+      void queryClient.invalidateQueries({ queryKey: repairQuotationQueryKey(repair.id) })
     },
+    onError: (err) => pushError(getApiErrorMessage(err)),
   })
 
   const decideMutation = useMutation({
     mutationFn: ({ decision, feedback }: { decision: 'approved' | 'rejected'; feedback?: string }) =>
       decideQuotationRequest(repair.id, { decision, feedback }),
     onSuccess: (data) => {
-      setErrorMessage(null)
-      setSuccessMessage(data.message ?? 'Quotation decision recorded.')
+      pushSuccess(data.message ?? 'Quotation decision recorded.')
       setShowDeclineModal(false)
       void queryClient.invalidateQueries({ queryKey: repairDetailQueryKey(repair.id) })
       void queryClient.invalidateQueries({ queryKey: repairQuotationQueryKey(repair.id) })
     },
-    onError: (err) => {
-      setErrorMessage(getApiErrorMessage(err))
-    },
+    onError: (err) => pushError(getApiErrorMessage(err)),
   })
+
+  const activeQuotation =
+    quotation && quotation.status !== 'withdrawn' ? quotation : null
+
+  function beginQuotationEdit() {
+    if (!activeQuotation) return
+    setDiagnosticFindings(activeQuotation.diagnosticFindings)
+    setEstimatedCompletion(activeQuotation.estimatedCompletion)
+    setLineItems(
+      activeQuotation.lineItems.length
+        ? activeQuotation.lineItems
+        : [{ description: '', category: 'parts', cost: 0 }],
+    )
+    setIsEditingQuotation(true)
+  }
+
+  const showVendorQuotationForm =
+    isAssignedVendor &&
+    (!activeQuotation || quotation?.status === 'withdrawn' || isEditingQuotation)
 
   // Handlers for dynamic line items
   function addLineItem() {
@@ -113,7 +140,7 @@ export function RepairQuotationSection({
 
   function removeLineItem(index: number) {
     if (lineItems.length <= 1) {
-      setErrorMessage('A quotation must contain at least one line item.')
+      pushWarning('A quotation must contain at least one line item.')
       return
     }
     setLineItems((prev) => prev.filter((_, i) => i !== index))
@@ -139,33 +166,31 @@ export function RepairQuotationSection({
 
   function handleVendorSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setErrorMessage(null)
-    setSuccessMessage(null)
 
     if (diagnosticFindings.trim().length < 10) {
-      setErrorMessage('Diagnostic findings must be at least 10 characters long.')
+      pushError('Diagnostic findings must be at least 10 characters long.')
       return
     }
 
     if (lineItems.length === 0) {
-      setErrorMessage('Must include at least one itemized line item.')
+      pushError('Must include at least one itemized line item.')
       return
     }
 
     for (let i = 0; i < lineItems.length; i++) {
       const it = lineItems[i]
       if (!it.description.trim()) {
-        setErrorMessage(`Line item #${i + 1} description is required.`)
+        pushError(`Line item #${i + 1} description is required.`)
         return
       }
       if (isNaN(it.cost) || it.cost < 0) {
-        setErrorMessage(`Line item #${i + 1} cost cannot be negative.`)
+        pushError(`Line item #${i + 1} cost cannot be negative.`)
         return
       }
     }
 
     if (!estimatedCompletion.trim()) {
-      setErrorMessage('Please provide an estimated completion turnaround.')
+      pushError('Please provide an estimated completion turnaround.')
       return
     }
 
@@ -214,24 +239,14 @@ export function RepairQuotationSection({
                 Quote Declined
               </span>
             )}
+            {quotation.status === 'withdrawn' && (
+              <span className="rounded-full bg-muted px-3 py-1 text-caption font-bold text-muted-foreground">
+                Withdrawn by technician
+              </span>
+            )}
           </div>
         )}
       </div>
-
-      {/* Notifications */}
-      {errorMessage && (
-        <div className="mt-4 flex items-start gap-2.5 rounded-lg border border-rose-500/30 bg-rose-500/10 p-3.5 text-ui text-rose-600 dark:text-rose-400">
-          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-          <span>{errorMessage}</span>
-        </div>
-      )}
-
-      {successMessage && (
-        <div className="mt-4 flex items-start gap-2.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3.5 text-ui text-emerald-600 dark:text-emerald-400">
-          <CheckCircle className="mt-0.5 h-4 w-4 shrink-0" />
-          <span>{successMessage}</span>
-        </div>
-      )}
 
       {/* Loading state */}
       {isLoading && (
@@ -242,7 +257,7 @@ export function RepairQuotationSection({
       )}
 
       {/* Case 1: No quotation yet, but assigned vendor is looking at ticket */}
-      {!isLoading && !quotation && isAssignedVendor && (
+      {!isLoading && showVendorQuotationForm && (
         <form onSubmit={handleVendorSubmit} className="mt-6 space-y-6">
           <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
             <h3 className="flex items-center gap-2 font-display text-base font-semibold text-foreground">
@@ -398,7 +413,7 @@ export function RepairQuotationSection({
             ) : (
               <>
                 <FileText className="h-4 w-4" />
-                Submit Official Quotation to Customer
+                {isEditingQuotation ? 'Save revised quotation' : 'Submit official quotation to customer'}
               </>
             )}
           </Button>
@@ -406,7 +421,10 @@ export function RepairQuotationSection({
       )}
 
       {/* Case 2: Customer waiting for assigned technician to submit diagnosis */}
-      {!isLoading && !quotation && !isAssignedVendor && (
+      {!isLoading &&
+        !activeQuotation &&
+        !isAssignedVendor &&
+        quotation?.status !== 'withdrawn' && (
         <div className="mt-6 flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-10 text-center">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-secondary text-primary">
             <Clock className="h-6 w-6" />
@@ -421,7 +439,13 @@ export function RepairQuotationSection({
       )}
 
       {/* Case 3: Quotation has been submitted -> Customer & Vendor can inspect receipt */}
-      {!isLoading && quotation && (
+      {!isLoading && quotation?.status === 'withdrawn' && !isAssignedVendor && (
+        <div className="mt-6 rounded-lg border border-dashed border-border bg-secondary/20 p-6 text-center text-ui text-muted-foreground">
+          The technician withdrew the previous quote and is preparing a revised itemized quotation.
+        </div>
+      )}
+
+      {!isLoading && activeQuotation && !isEditingQuotation && (
         <div className="mt-6 space-y-6">
           {/* Diagnostic Findings Card */}
           <div className="rounded-lg border border-border bg-secondary/20 p-4">
@@ -496,7 +520,24 @@ export function RepairQuotationSection({
               </div>
             )}
 
-          {quotation.status === 'pending' && canAuthorizeQuotation && (
+          {activeQuotation.status === 'pending' && isAssignedVendor && (
+            <div className="flex flex-wrap gap-2 border-t border-border pt-4">
+              <Button variant="outline" size="sm" onClick={beginQuotationEdit}>
+                Edit quotation
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={withdrawQuotationMutation.isPending}
+                onClick={() => withdrawQuotationMutation.mutate()}
+                className="text-rose-600 hover:bg-rose-500/10"
+              >
+                Withdraw quotation
+              </Button>
+            </div>
+          )}
+
+          {activeQuotation.status === 'pending' && canAuthorizeQuotation && (
             <div className="rounded-xl border border-primary/20 bg-primary/5 p-5">
               <div className="flex items-start gap-3">
                 <ShieldCheck className="mt-1 h-5 w-5 text-primary shrink-0" />
@@ -512,11 +553,7 @@ export function RepairQuotationSection({
 
               <div className="mt-5 flex flex-wrap items-center gap-3">
                 <Button
-                  onClick={() => {
-                    setErrorMessage(null)
-                    setSuccessMessage(null)
-                    decideMutation.mutate({ decision: 'approved' })
-                  }}
+                  onClick={() => decideMutation.mutate({ decision: 'approved' })}
                   disabled={decideMutation.isPending}
                   className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
                 >
@@ -580,7 +617,7 @@ export function RepairQuotationSection({
           )}
 
           {/* Approved status view */}
-          {quotation.status === 'approved' && (
+          {activeQuotation.status === 'approved' && (
             <div className="flex items-center gap-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4 text-emerald-700 dark:text-emerald-300">
               <CheckCircle className="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
               <div>
@@ -598,7 +635,7 @@ export function RepairQuotationSection({
           )}
 
           {/* Rejected status view */}
-          {quotation.status === 'rejected' && (
+          {activeQuotation.status === 'rejected' && (
             <div className="flex items-center gap-3 rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-rose-700 dark:text-rose-300">
               <XCircle className="h-5 w-5 shrink-0 text-rose-600 dark:text-rose-400" />
               <div>

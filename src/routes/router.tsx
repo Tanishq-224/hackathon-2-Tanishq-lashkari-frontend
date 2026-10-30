@@ -15,6 +15,8 @@ import { NotFoundPage } from '@/pages/NotFoundPage'
 import { RepairDetailPage } from '@/pages/RepairDetailPage'
 import { ResetPasswordPage } from '@/pages/ResetPasswordPage'
 import { SignupPage } from '@/pages/SignupPage'
+import { EstimateDetailPage } from '@/pages/EstimateDetailPage'
+import { VendorEstimateSubmitPage } from '@/pages/VendorEstimateSubmitPage'
 import { VendorMarketplacePage } from '@/pages/VendorMarketplacePage'
 import { VerifyOtpPage } from '@/pages/VerifyOtpPage'
 
@@ -54,9 +56,11 @@ export function createAppRouter() {
       children: [
         { index: true, element: <CustomerDashboardPage /> },
         { path: 'marketplace', element: <VendorMarketplacePage /> },
+        { path: 'marketplace/:repairId/estimate', element: <VendorEstimateSubmitPage /> },
         { path: 'new-repair', element: <NewRepairRequestPage /> },
         { path: 'profile', element: <DashboardProfilePage /> },
         { path: 'repairs/:id', element: <RepairDetailPage /> },
+        { path: 'repairs/:id/estimates/:estimateId', element: <EstimateDetailPage /> },
       ],
     },
   ])

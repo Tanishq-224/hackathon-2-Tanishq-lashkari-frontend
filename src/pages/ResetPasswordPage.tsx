@@ -1,5 +1,4 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 
@@ -14,6 +13,7 @@ import {
   resetPasswordSchema,
   type ResetPasswordFormValues,
 } from '@/features/auth/lib/auth-schemas'
+import { useAppToast } from '@/components/shared/AppToastProvider'
 import { getApiErrorMessage } from '@/lib/api-client'
 import { cn } from '@/lib/utils'
 
@@ -27,8 +27,7 @@ export function ResetPasswordPage() {
   const emailFromQuery = params.get('email') ?? ''
   const otpFromQuery = params.get('otp') ?? ''
 
-  const [formError, setFormError] = useState<string | null>(null)
-  const [status, setStatus] = useState<string | null>(null)
+  const { pushError, pushSuccess } = useAppToast()
 
   const {
     register,
@@ -54,15 +53,14 @@ export function ResetPasswordPage() {
    * @returns {Promise<void>}
    */
   async function onSubmit(values: ResetPasswordFormValues) {
-    setFormError(null)
     try {
       const response = await resetPasswordRequest(values)
-      setStatus(response.message)
+      pushSuccess(response.message)
       setTimeout(() => {
         void navigate('/login')
       }, 1200)
     } catch (error) {
-      setFormError(getApiErrorMessage(error))
+      pushError(getApiErrorMessage(error))
     }
   }
 
@@ -76,12 +74,11 @@ export function ResetPasswordPage() {
     if (!email) {
       return
     }
-    setFormError(null)
     try {
       const response = await resendOtpRequest({ email, purpose: 'reset' })
-      setStatus(response.message)
+      pushSuccess(response.message)
     } catch (error) {
-      setFormError(getApiErrorMessage(error))
+      pushError(getApiErrorMessage(error))
     }
   }
 
@@ -172,18 +169,6 @@ export function ResetPasswordPage() {
             registration={register('confirmPassword')}
           />
         </div>
-
-        {status ? (
-          <p className="rounded-xl border border-primary/30 bg-primary/10 px-4 py-3 text-body text-foreground">
-            {status}
-          </p>
-        ) : null}
-
-        {formError ? (
-          <p className="rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-body text-destructive">
-            {formError}
-          </p>
-        ) : null}
 
         <Button
           type="submit"

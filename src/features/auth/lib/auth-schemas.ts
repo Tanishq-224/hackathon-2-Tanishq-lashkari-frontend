@@ -54,3 +54,27 @@ export type LoginFormValues = z.infer<typeof loginSchema>
 export type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>
 export type VerifyOtpFormValues = z.infer<typeof verifyOtpSchema>
 export type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>
+
+/** @description Password change on dashboard profile (email comes from session). */
+export const profilePasswordResetSchema = z
+  .object({
+    otp: z
+      .string()
+      .trim()
+      .length(6, 'Enter the 6-digit code.')
+      .regex(/^\d+$/, 'Use numbers only.'),
+    password: passwordSchema,
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'Passwords do not match.',
+    path: ['confirmPassword'],
+  })
+
+export type ProfilePasswordResetFormValues = z.infer<typeof profilePasswordResetSchema>
+
+export const updateProfileSchema = z.object({
+  fullName: z.string().trim().min(2, 'Enter at least 2 characters.').max(80, 'Name is too long.'),
+})
+
+export type UpdateProfileFormValues = z.infer<typeof updateProfileSchema>

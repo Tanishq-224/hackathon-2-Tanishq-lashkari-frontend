@@ -1,5 +1,4 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
@@ -14,6 +13,7 @@ import {
   type VerifyOtpFormValues,
 } from '@/features/auth/lib/auth-schemas'
 import { authSessionQueryKey } from '@/hooks/useAuthSession'
+import { useAppToast } from '@/components/shared/AppToastProvider'
 import { getApiErrorMessage } from '@/lib/api-client'
 import { cn } from '@/lib/utils'
 
@@ -27,8 +27,7 @@ export function VerifyOtpPage() {
   const purpose = params.get('purpose') === 'reset' ? 'reset' : 'signup'
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const [formError, setFormError] = useState<string | null>(null)
-  const [status, setStatus] = useState<string | null>(null)
+  const { pushError, pushSuccess } = useAppToast()
 
   const {
     register,
@@ -47,11 +46,10 @@ export function VerifyOtpPage() {
    */
   async function onSubmit(values: VerifyOtpFormValues) {
     if (!email) {
-      setFormError('Missing email. Start from sign up again.')
+      pushError('Missing email. Start from sign up again.')
       return
     }
 
-    setFormError(null)
     try {
       if (purpose === 'reset') {
         void navigate(
@@ -61,11 +59,11 @@ export function VerifyOtpPage() {
       }
 
       const response = await verifySignupOtpRequest({ email, otp: values.otp })
-      setStatus(response.message)
+      pushSuccess(response.message)
       await queryClient.invalidateQueries({ queryKey: authSessionQueryKey })
       void navigate('/')
     } catch (error) {
-      setFormError(getApiErrorMessage(error))
+      pushError(getApiErrorMessage(error))
     }
   }
 
@@ -78,15 +76,14 @@ export function VerifyOtpPage() {
     if (!email) {
       return
     }
-    setFormError(null)
     try {
       const response = await resendOtpRequest({
         email,
         purpose: purpose === 'reset' ? 'reset' : 'signup',
       })
-      setStatus(response.message)
+      pushSuccess(response.message)
     } catch (error) {
-      setFormError(getApiErrorMessage(error))
+      pushError(getApiErrorMessage(error))
     }
   }
 
@@ -141,18 +138,6 @@ export function VerifyOtpPage() {
             <p className="text-caption text-destructive">{errors.otp.message}</p>
           ) : null}
         </div>
-
-        {status ? (
-          <p className="rounded-xl border border-primary/30 bg-primary/10 px-4 py-3 text-body text-foreground">
-            {status}
-          </p>
-        ) : null}
-
-        {formError ? (
-          <p className="rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-body text-destructive">
-            {formError}
-          </p>
-        ) : null}
 
         <Button
           type="submit"

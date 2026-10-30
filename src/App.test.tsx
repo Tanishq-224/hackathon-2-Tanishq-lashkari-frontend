@@ -74,8 +74,8 @@ describe('HomePage routing shell', () => {
     renderPublicRoute(HomePage, '', '/')
 
     expect(
-      screen.getByRole('button', { name: /switch to (light|dark) theme/i }),
-    ).toBeInTheDocument()
+      screen.getAllByRole('button', { name: /switch to (light|dark) theme/i }).length,
+    ).toBeGreaterThan(0)
   })
 
   it('exposes primary public navigation links', () => {

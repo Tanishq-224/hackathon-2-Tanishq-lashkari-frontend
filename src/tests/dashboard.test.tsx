@@ -12,6 +12,7 @@ import {
 import { CustomerDashboardPage } from '@/pages/CustomerDashboardPage'
 import { NewRepairRequestPage } from '@/pages/NewRepairRequestPage'
 import { VendorMarketplacePage } from '@/pages/VendorMarketplacePage'
+import { AppToastProvider } from '@/components/shared/AppToastProvider'
 import { RepairCompletionSection } from '@/features/repairs/components/RepairCompletionSection'
 import { RepairQuotationSection } from '@/features/repairs/components/RepairQuotationSection'
 
@@ -34,7 +35,22 @@ function renderWithProviders(
 
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>{ui}</MemoryRouter>
+      <AppToastProvider>
+        <MemoryRouter>{ui}</MemoryRouter>
+      </AppToastProvider>
+    </QueryClientProvider>,
+  )
+}
+
+function renderRepairSection(
+  ui: React.ReactElement,
+  queryClient: QueryClient,
+) {
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <AppToastProvider>
+        <MemoryRouter>{ui}</MemoryRouter>
+      </AppToastProvider>
     </QueryClientProvider>,
   )
 }
@@ -105,16 +121,13 @@ describe('Phase 3 Customer Repairs UI', () => {
     })
     queryClient.setQueryData(repairQuotationQueryKey('rep-123'), null)
 
-    render(
-      <QueryClientProvider client={queryClient}>
-        <MemoryRouter>
-          <RepairQuotationSection
-            repair={mockRepair}
-            userRole="vendor"
-            userId="vend-1"
-          />
-        </MemoryRouter>
-      </QueryClientProvider>,
+    renderRepairSection(
+      <RepairQuotationSection
+        repair={mockRepair}
+        userRole="vendor"
+        userId="vend-1"
+      />,
+      queryClient,
     )
 
     expect(
@@ -124,7 +137,7 @@ describe('Phase 3 Customer Repairs UI', () => {
       screen.getByPlaceholderText(/OLED digitizer damaged/i),
     ).toBeInTheDocument()
     expect(
-      screen.getByRole('button', { name: /Submit Official Quotation to Customer/i }),
+      screen.getByRole('button', { name: /Submit official quotation to customer/i }),
     ).toBeInTheDocument()
   })
 
@@ -168,16 +181,13 @@ describe('Phase 3 Customer Repairs UI', () => {
     })
     queryClient.setQueryData(repairQuotationQueryKey('rep-456'), mockQuotation)
 
-    render(
-      <QueryClientProvider client={queryClient}>
-        <MemoryRouter>
-          <RepairQuotationSection
-            repair={mockRepair}
-            userRole="customer"
-            userId="cust-1"
-          />
-        </MemoryRouter>
-      </QueryClientProvider>,
+    renderRepairSection(
+      <RepairQuotationSection
+        repair={mockRepair}
+        userRole="customer"
+        userId="cust-1"
+      />,
+      queryClient,
     )
 
     expect(
@@ -235,16 +245,13 @@ describe('Phase 3 Customer Repairs UI', () => {
     })
     queryClient.setQueryData(repairQuotationQueryKey('rep-admin'), mockQuotation)
 
-    render(
-      <QueryClientProvider client={queryClient}>
-        <MemoryRouter>
-          <RepairQuotationSection
-            repair={mockRepair}
-            userRole="admin"
-            userId="admin-1"
-          />
-        </MemoryRouter>
-      </QueryClientProvider>,
+    renderRepairSection(
+      <RepairQuotationSection
+        repair={mockRepair}
+        userRole="admin"
+        userId="admin-1"
+      />,
+      queryClient,
     )
 
     expect(
@@ -294,16 +301,13 @@ describe('Phase 3 Customer Repairs UI', () => {
     })
     queryClient.setQueryData(repairQuotationQueryKey('rep-str'), mockQuotation)
 
-    render(
-      <QueryClientProvider client={queryClient}>
-        <MemoryRouter>
-          <RepairQuotationSection
-            repair={mockRepair}
-            userRole="customer"
-            userId="cust-1"
-          />
-        </MemoryRouter>
-      </QueryClientProvider>,
+    renderRepairSection(
+      <RepairQuotationSection
+        repair={mockRepair}
+        userRole="customer"
+        userId="cust-1"
+      />,
+      queryClient,
     )
 
     expect(screen.getAllByText('$55.50').length).toBeGreaterThan(0)
@@ -332,16 +336,13 @@ describe('Phase 3 Customer Repairs UI', () => {
       defaultOptions: { queries: { retry: false } },
     })
 
-    render(
-      <QueryClientProvider client={queryClient}>
-        <MemoryRouter>
-          <RepairCompletionSection
-            repair={mockRepair}
-            userRole="vendor"
-            userId="vend-1"
-          />
-        </MemoryRouter>
-      </QueryClientProvider>,
+    renderRepairSection(
+      <RepairCompletionSection
+        repair={mockRepair}
+        userRole="vendor"
+        userId="vend-1"
+      />,
+      queryClient,
     )
 
     expect(screen.getByText(/Repair Execution & Completion/i)).toBeInTheDocument()
@@ -378,16 +379,13 @@ describe('Phase 3 Customer Repairs UI', () => {
       defaultOptions: { queries: { retry: false } },
     })
 
-    const { rerender } = render(
-      <QueryClientProvider client={queryClient}>
-        <MemoryRouter>
-          <RepairCompletionSection
-            repair={diagnosedRepair}
-            userRole="vendor"
-            userId="vend-1"
-          />
-        </MemoryRouter>
-      </QueryClientProvider>,
+    const { rerender } = renderRepairSection(
+      <RepairCompletionSection
+        repair={diagnosedRepair}
+        userRole="vendor"
+        userId="vend-1"
+      />,
+      queryClient,
     )
 
     expect(
@@ -396,13 +394,15 @@ describe('Phase 3 Customer Repairs UI', () => {
 
     rerender(
       <QueryClientProvider client={queryClient}>
-        <MemoryRouter>
-          <RepairCompletionSection
-            repair={approvedRepair}
-            userRole="vendor"
-            userId="vend-1"
-          />
-        </MemoryRouter>
+        <AppToastProvider>
+          <MemoryRouter>
+            <RepairCompletionSection
+              repair={approvedRepair}
+              userRole="vendor"
+              userId="vend-1"
+            />
+          </MemoryRouter>
+        </AppToastProvider>
       </QueryClientProvider>,
     )
 

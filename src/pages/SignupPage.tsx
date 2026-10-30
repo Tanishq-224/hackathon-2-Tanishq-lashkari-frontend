@@ -1,5 +1,4 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
 import { User, Wrench } from 'lucide-react'
@@ -16,6 +15,7 @@ import {
   signupSchema,
   type SignupFormValues,
 } from '@/features/auth/lib/auth-schemas'
+import { useAppToast } from '@/components/shared/AppToastProvider'
 import { getApiErrorMessage } from '@/lib/api-client'
 import { cn } from '@/lib/utils'
 
@@ -25,7 +25,7 @@ import { cn } from '@/lib/utils'
  */
 export function SignupPage() {
   const navigate = useNavigate()
-  const [formError, setFormError] = useState<string | null>(null)
+  const { pushError } = useAppToast()
 
   const {
     register,
@@ -55,14 +55,13 @@ export function SignupPage() {
    * @returns {Promise<void>}
    */
   async function onSubmit(values: SignupFormValues) {
-    setFormError(null)
     try {
       await signupRequest(values)
       void navigate(
         `/verify-otp?email=${encodeURIComponent(values.email)}&purpose=signup`,
       )
     } catch (error) {
-      setFormError(getApiErrorMessage(error))
+      pushError(getApiErrorMessage(error))
     }
   }
 
@@ -91,7 +90,7 @@ export function SignupPage() {
     >
       <div className="space-y-4">
         {/* Google Identity Services Sign-Up Button */}
-        <GoogleSignInButton text="signup_with" onError={setFormError} />
+        <GoogleSignInButton text="signup_with" onError={pushError} />
 
         {/* Clean Flex Separator */}
         <div className="flex items-center gap-3 py-1">
@@ -218,12 +217,6 @@ export function SignupPage() {
             registration={register('confirmPassword')}
           />
         </div>
-
-        {formError ? (
-          <p className="rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-body text-destructive">
-            {formError}
-          </p>
-        ) : null}
 
         <Button
           type="submit"

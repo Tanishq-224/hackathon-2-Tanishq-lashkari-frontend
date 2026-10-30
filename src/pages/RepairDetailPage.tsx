@@ -4,8 +4,6 @@ import {
   AlertCircle,
   ArrowLeft,
   Calendar,
-  CheckCircle2,
-  Clock,
   Cpu,
   Headphones,
   Laptop,
@@ -21,49 +19,14 @@ import {
   fetchRepairDetails,
   repairDetailQueryKey,
   type DeviceType,
-  type RepairStatus,
 } from '@/features/repairs/api/repairsApi'
 import { RepairEstimatesSection } from '@/features/repairs/components/RepairEstimatesSection'
+import { RepairLifecycleTimeline } from '@/features/repairs/components/RepairLifecycleTimeline'
 import { RepairCompletionSection } from '@/features/repairs/components/RepairCompletionSection'
 import { RepairQuotationSection } from '@/features/repairs/components/RepairQuotationSection'
 import { useAuthSession } from '@/hooks/useAuthSession'
+import { useRepairRealtimeSubscription } from '@/hooks/useRepairRealtimeSubscription'
 import { useQuery } from '@tanstack/react-query'
-
-const WORKFLOW_STEPS: { status: RepairStatus; label: string }[] = [
-  { status: 'submitted', label: 'Request Submitted' },
-  { status: 'estimated', label: 'Estimates Received' },
-  { status: 'vendor_selected', label: 'Vendor Assigned' },
-  { status: 'diagnosed', label: 'Diagnosis Completed' },
-  { status: 'quote_approved', label: 'Quote Approved' },
-  { status: 'in_repair', label: 'In Repair' },
-  { status: 'ready_for_pickup', label: 'Ready for Pickup' },
-  { status: 'completed', label: 'Completed' },
-]
-
-function getStepIndex(status: RepairStatus): number {
-  switch (status) {
-    case 'submitted':
-      return 0
-    case 'estimated':
-      return 1
-    case 'vendor_selected':
-      return 2
-    case 'diagnosed':
-      return 3
-    case 'quote_approved':
-      return 4
-    case 'in_repair':
-      return 5
-    case 'ready_for_pickup':
-      return 6
-    case 'completed':
-      return 7
-    case 'cancelled':
-      return -1
-    default:
-      return 0
-  }
-}
 
 function getDeviceIcon(type: DeviceType) {
   switch (type) {
@@ -86,6 +49,7 @@ export function RepairDetailPage() {
   const { id } = useParams<{ id: string }>()
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const { user } = useAuthSession()
+  useRepairRealtimeSubscription(id)
 
   const {
     data: repair,
@@ -129,8 +93,6 @@ export function RepairDetailPage() {
   }
 
   const DeviceIcon = getDeviceIcon(repair.deviceType)
-  const currentStep = getStepIndex(repair.status)
-
   return (
     <div className="mx-auto max-w-4xl space-y-5 sm:space-y-8">
       {/* Back button */}
@@ -178,62 +140,7 @@ export function RepairDetailPage() {
         </div>
       </div>
 
-      {/* Progress Timeline Tracker */}
-      <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
-        <h2 className="font-display text-caption font-semibold uppercase tracking-wider text-muted-foreground sm:text-ui">
-          Repair Lifecycle Status
-        </h2>
-
-        <div className="mt-4 sm:mt-6">
-          <div className="hidden grid-cols-4 gap-2 xl:grid xl:grid-cols-8">
-            {WORKFLOW_STEPS.map((step, idx) => {
-              const isPast = idx < currentStep
-              const isCurrent = idx === currentStep
-              return (
-                <div key={step.status} className="flex flex-col items-center text-center">
-                  <div
-                    className={`flex h-8 w-8 items-center justify-center rounded-full border text-caption font-bold transition ${
-                      isPast
-                        ? 'border-emerald-500 bg-emerald-500 text-white'
-                        : isCurrent
-                          ? 'border-primary bg-primary text-primary-foreground shadow-sm ring-4 ring-primary/20'
-                          : 'border-border bg-secondary text-muted-foreground'
-                    }`}
-                  >
-                    {isPast ? <CheckCircle2 className="h-4 w-4" /> : idx + 1}
-                  </div>
-                  <span
-                    className={`mt-2 text-[11px] font-medium leading-tight ${
-                      isCurrent
-                        ? 'font-bold text-primary'
-                        : isPast
-                          ? 'text-foreground'
-                          : 'text-muted-foreground'
-                    }`}
-                  >
-                    {step.label}
-                  </span>
-                </div>
-              )
-            })}
-          </div>
-
-          {/* Mobile Current Status Pill */}
-          <div className="flex flex-col gap-2 rounded-xl border border-border bg-secondary/40 p-3 sm:flex-row sm:items-center sm:justify-between xl:hidden">
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 shrink-0 text-primary" />
-              <span className="text-caption font-medium text-foreground sm:text-ui">
-                Current stage
-              </span>
-            </div>
-            <span className="inline-flex max-w-full rounded-full bg-primary/15 px-3 py-1 text-caption font-bold text-primary sm:text-ui">
-              <span className="truncate">
-                {WORKFLOW_STEPS[currentStep]?.label || repair.status}
-              </span>
-            </span>
-          </div>
-        </div>
-      </div>
+      <RepairLifecycleTimeline status={repair.status} />
 
       {/* Problem Description & Attached Photos */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">

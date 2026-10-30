@@ -8,28 +8,21 @@ import {
   Headphones,
   Laptop,
   Loader2,
-  Send,
   Smartphone,
   Store,
   Tablet,
   Watch,
-  X,
 } from 'lucide-react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 
-import { Button, buttonVariants } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { buttonVariants } from '@/components/ui/button'
 import {
   fetchMarketplaceFeed,
   marketplaceFeedQueryKey,
-  repairDetailQueryKey,
-  repairEstimatesQueryKey,
-  submitEstimateRequest,
   type DeviceType,
   type RepairItem,
   type Urgency,
 } from '@/features/repairs/api/repairsApi'
-import { getApiErrorMessage } from '@/lib/api-client'
 import { cn } from '@/lib/utils'
 
 const DEVICE_FILTERS: { type: DeviceType | 'all'; label: string; icon: typeof Smartphone }[] = [
@@ -85,19 +78,8 @@ function getUrgencyBadge(urgency: Urgency) {
 }
 
 export function VendorMarketplacePage() {
-  const queryClient = useQueryClient()
   const [selectedDevice, setSelectedDevice] = useState<DeviceType | 'all'>('all')
   const [selectedUrgency, setSelectedUrgency] = useState<Urgency | 'all'>('all')
-  const [activeModalRepair, setActiveModalRepair] = useState<RepairItem | null>(null)
-
-  // Estimate modal form fields
-  const [minCost, setMinCost] = useState('')
-  const [maxCost, setMaxCost] = useState('')
-  const [turnaroundTime, setTurnaroundTime] = useState('24 Hours')
-  const [warrantyMonths, setWarrantyMonths] = useState('6')
-  const [notes, setNotes] = useState('')
-  const [formError, setFormError] = useState<string | null>(null)
-  const [successBanner, setSuccessBanner] = useState<string | null>(null)
 
   const filters = {
     ...(selectedDevice !== 'all' ? { deviceType: selectedDevice } : {}),
@@ -108,85 +90,6 @@ export function VendorMarketplacePage() {
     queryKey: marketplaceFeedQueryKey(filters),
     queryFn: () => fetchMarketplaceFeed(filters),
   })
-
-  const submitMutation = useMutation({
-    mutationFn: ({
-      repairId,
-      payload,
-    }: {
-      repairId: string
-      payload: {
-        minCost: number
-        maxCost: number
-        turnaroundTime: string
-        warrantyMonths: number
-        notes: string
-      }
-    }) => submitEstimateRequest(repairId, payload),
-    onSuccess: (_, variables) => {
-      setSuccessBanner('Your proposal has been submitted to the customer!')
-      setActiveModalRepair(null)
-      setMinCost('')
-      setMaxCost('')
-      setNotes('')
-      void queryClient.invalidateQueries({ queryKey: ['marketplace'] })
-      void queryClient.invalidateQueries({ queryKey: repairDetailQueryKey(variables.repairId) })
-      void queryClient.invalidateQueries({
-        queryKey: repairEstimatesQueryKey(variables.repairId),
-      })
-    },
-    onError: (err) => {
-      setFormError(getApiErrorMessage(err))
-    },
-  })
-
-  function handleOpenEstimateModal(repair: RepairItem) {
-    setActiveModalRepair(repair)
-    setFormError(null)
-    setMinCost(repair.estimatedBudgetMin ? String(repair.estimatedBudgetMin) : '')
-    setMaxCost(repair.estimatedBudgetMax ? String(repair.estimatedBudgetMax) : '')
-    setTurnaroundTime('24 Hours')
-    setWarrantyMonths('6')
-    setNotes('')
-  }
-
-  function handleModalSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!activeModalRepair) return
-    setFormError(null)
-
-    const min = parseFloat(minCost)
-    const max = parseFloat(maxCost)
-    const warranty = parseInt(warrantyMonths, 10)
-
-    if (isNaN(min) || min <= 0) {
-      setFormError('Please enter a valid minimum estimated price.')
-      return
-    }
-    if (isNaN(max) || max < min) {
-      setFormError('Maximum price must be greater than or equal to minimum price.')
-      return
-    }
-    if (!turnaroundTime.trim()) {
-      setFormError('Please specify an estimated turnaround time.')
-      return
-    }
-    if (notes.trim().length < 5) {
-      setFormError('Please provide a brief notes description (min 5 characters).')
-      return
-    }
-
-    submitMutation.mutate({
-      repairId: activeModalRepair.id,
-      payload: {
-        minCost: min,
-        maxCost: max,
-        turnaroundTime: turnaroundTime.trim(),
-        warrantyMonths: isNaN(warranty) ? 3 : warranty,
-        notes: notes.trim(),
-      },
-    })
-  }
 
   return (
     <div className="space-y-8">
@@ -205,12 +108,6 @@ export function VendorMarketplacePage() {
           Browse customer repair requests seeking estimates. Review reported symptoms and submit preliminary pricing.
         </p>
       </div>
-
-      {successBanner && (
-        <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-ui text-emerald-400">
-          {successBanner}
-        </div>
-      )}
 
       {/* Filter Tabs */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -348,13 +245,12 @@ export function VendorMarketplacePage() {
 
                 {/* Footer Actions */}
                 <div className="mt-6 flex items-center gap-2 border-t border-border pt-4">
-                  <Button
-                    size="sm"
-                    onClick={() => handleOpenEstimateModal(repair)}
-                    className="flex-1"
+                  <Link
+                    to={`/dashboard/marketplace/${repair.id}/estimate`}
+                    className={cn(buttonVariants({ size: 'sm' }), 'flex-1')}
                   >
-                    Submit Estimate
-                  </Button>
+                    Open estimate form
+                  </Link>
                   <Link
                     to={`/dashboard/repairs/${repair.id}`}
                     className={cn(
@@ -372,159 +268,6 @@ export function VendorMarketplacePage() {
         </div>
       )}
 
-      {/* Modal Dialog for Submitting Estimate */}
-      {activeModalRepair && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm animate-in fade-in duration-150"
-          onClick={() => setActiveModalRepair(null)}
-        >
-          <div
-            className="relative w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-2xl animate-in zoom-in-95 duration-150"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              type="button"
-              onClick={() => setActiveModalRepair(null)}
-              className="absolute right-4 top-4 text-muted-foreground transition hover:text-foreground"
-              aria-label="Close modal"
-            >
-              <X className="size-5" />
-            </button>
-
-            <div className="space-y-1">
-              <span className="text-caption font-semibold uppercase tracking-wider text-primary">
-                Preliminary Proposal
-              </span>
-              <h2 className="font-display text-h3 font-bold text-foreground">
-                Submit Estimate for {activeModalRepair.brand} {activeModalRepair.modelName}
-              </h2>
-              <p className="text-caption text-muted-foreground">
-                Issue: <span className="capitalize">{activeModalRepair.issueCategory.replace('_', ' ')}</span>
-              </p>
-            </div>
-
-            {formError && (
-              <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-caption text-destructive">
-                {formError}
-              </div>
-            )}
-
-            <form onSubmit={handleModalSubmit} className="mt-5 space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-caption font-medium text-foreground">
-                    Min Price ($) *
-                  </label>
-                  <div className="relative mt-1">
-                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">
-                      $
-                    </span>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      min="1"
-                      value={minCost}
-                      onChange={(e) => setMinCost(e.target.value)}
-                      placeholder="75"
-                      className="pl-7"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-caption font-medium text-foreground">
-                    Max Price ($) *
-                  </label>
-                  <div className="relative mt-1">
-                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">
-                      $
-                    </span>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      min="1"
-                      value={maxCost}
-                      onChange={(e) => setMaxCost(e.target.value)}
-                      placeholder="110"
-                      className="pl-7"
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-caption font-medium text-foreground">
-                    Estimated Turnaround *
-                  </label>
-                  <Input
-                    type="text"
-                    value={turnaroundTime}
-                    onChange={(e) => setTurnaroundTime(e.target.value)}
-                    placeholder="e.g. 24 Hours, 2 Days"
-                    className="mt-1"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="text-caption font-medium text-foreground">
-                    Warranty (Months)
-                  </label>
-                  <Input
-                    type="number"
-                    min="0"
-                    max="60"
-                    value={warrantyMonths}
-                    onChange={(e) => setWarrantyMonths(e.target.value)}
-                    placeholder="6"
-                    className="mt-1"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-caption font-medium text-foreground">
-                  Repair Plan & Notes *
-                </label>
-                <textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  rows={3}
-                  placeholder="Describe parts, labor, diagnostic steps, or warranty terms..."
-                  className="mt-1 w-full rounded-xl border border-input bg-background p-3 text-ui text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                  required
-                />
-              </div>
-
-              <div className="mt-6 flex items-center justify-end gap-3 pt-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setActiveModalRepair(null)}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={submitMutation.isPending}>
-                  {submitMutation.isPending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      <span>Submitting...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Send className="mr-2 h-4 w-4" />
-                      <span>Submit Proposal</span>
-                    </>
-                  )}
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

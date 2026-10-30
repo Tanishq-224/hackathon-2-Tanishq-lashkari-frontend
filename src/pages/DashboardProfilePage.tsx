@@ -1,17 +1,26 @@
-import { useEffect, useState } from 'react'
-import { BadgeCheck, Mail, Shield, Store, UserRound, Wrench } from 'lucide-react'
+import { useEffect } from 'react'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { BadgeCheck, Loader2, Mail, Shield, Store, UserRound, Wrench } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useForm } from 'react-hook-form'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { updateProfileRequest } from '@/features/auth/api/authApi'
+import { ProfilePasswordResetSection } from '@/features/auth/components/ProfilePasswordResetSection'
+import {
+  updateProfileSchema,
+  type UpdateProfileFormValues,
+} from '@/features/auth/lib/auth-schemas'
 import {
   customerRepairsQueryKey,
   fetchMyRepairRequests,
   vendorRepairsQueryKey,
 } from '@/features/repairs/api/repairsApi'
 import { authSessionQueryKey, getProfileInitials, useAuthSession } from '@/hooks/useAuthSession'
+import { useAppToast } from '@/components/shared/AppToastProvider'
 import { getApiErrorMessage } from '@/lib/api-client'
+import { cn } from '@/lib/utils'
 
 /**
  * @description Customer or vendor account profile inside the dashboard workspace.
@@ -20,16 +29,23 @@ export function DashboardProfilePage() {
   const { user } = useAuthSession()
   const queryClient = useQueryClient()
   const isVendor = user?.role === 'vendor'
+  const { pushError, pushSuccess } = useAppToast()
 
-  const [fullName, setFullName] = useState(user?.fullName ?? '')
-  const [message, setMessage] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isDirty },
+  } = useForm<UpdateProfileFormValues>({
+    resolver: zodResolver(updateProfileSchema),
+    defaultValues: { fullName: user?.fullName ?? '' },
+  })
 
   useEffect(() => {
     if (user?.fullName) {
-      setFullName(user.fullName)
+      reset({ fullName: user.fullName })
     }
-  }, [user?.fullName])
+  }, [user?.fullName, reset])
 
   const { data: repairs = [], isLoading: repairsLoading } = useQuery({
     queryKey: isVendor ? vendorRepairsQueryKey : customerRepairsQueryKey,
@@ -43,16 +59,14 @@ export function DashboardProfilePage() {
   const completedCount = repairs.filter((r) => r.status === 'completed').length
 
   const updateMutation = useMutation({
-    mutationFn: () => updateProfileRequest({ fullName: fullName.trim() }),
-    onSuccess: () => {
-      setMessage('Profile saved successfully.')
-      setError(null)
+    mutationFn: (values: UpdateProfileFormValues) =>
+      updateProfileRequest({ fullName: values.fullName.trim() }),
+    onSuccess: (updated) => {
+      pushSuccess('Profile saved successfully.')
+      reset({ fullName: updated.fullName })
       void queryClient.invalidateQueries({ queryKey: authSessionQueryKey })
     },
-    onError: (err) => {
-      setError(getApiErrorMessage(err))
-      setMessage(null)
-    },
+    onError: (err) => pushError(getApiErrorMessage(err)),
   })
 
   if (!user) {
@@ -116,48 +130,74 @@ export function DashboardProfilePage() {
       <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
         <div className="flex items-center gap-2 text-foreground">
           <UserRound className="h-5 w-5 text-primary" />
-          <h2 className="font-display text-h3 font-semibold">Edit profile</h2>
+          <h2 className="font-display text-h3 font-semibold">Account information</h2>
         </div>
         <p className="mt-1 text-ui text-muted-foreground">
-          Update how your name appears on estimates, quotations, and repair updates.
+          Edit how your name appears on estimates, quotations, and repair updates. Email is tied to
+          login and OTP verification.
         </p>
 
         <form
           className="mt-5 space-y-4"
           onSubmit={(e) => {
-            e.preventDefault()
-            updateMutation.mutate()
+            void handleSubmit((values) => {
+              updateMutation.mutate(values)
+            })(e)
           }}
         >
           <label className="block text-ui font-medium text-foreground">
             Display name
             <Input
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              className="mt-1.5"
-              minLength={2}
+              className={cn('mt-1.5', errors.fullName && 'border-destructive')}
+              autoComplete="name"
               maxLength={80}
-              required
+              {...register('fullName')}
+            />
+            {errors.fullName ? (
+              <p className="mt-1 text-caption text-destructive">{errors.fullName.message}</p>
+            ) : null}
+          </label>
+
+          <label className="block text-ui font-medium text-foreground">
+            Email address
+            <Input
+              value={user.email}
+              readOnly
+              disabled
+              className="mt-1.5 bg-muted/50 text-muted-foreground"
+              autoComplete="email"
+            />
+            <p className="mt-1 text-caption text-muted-foreground">
+              Contact support to change your sign-in email.
+            </p>
+          </label>
+
+          <label className="block text-ui font-medium text-foreground">
+            Account type
+            <Input
+              value={isVendor ? 'Vendor' : 'Customer'}
+              readOnly
+              disabled
+              className="mt-1.5 w-full max-w-xs bg-muted/50 capitalize text-muted-foreground"
             />
           </label>
 
-          {error && (
-            <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-ui text-destructive">
-              {error}
-            </p>
-          )}
-          {message && (
-            <p className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-ui text-emerald-600 dark:text-emerald-400">
-              {message}
-            </p>
-          )}
-
-          <Button type="submit" disabled={updateMutation.isPending} className="gap-2">
-            <BadgeCheck className="h-4 w-4" />
-            Save profile
+          <Button
+            type="submit"
+            disabled={updateMutation.isPending || !isDirty}
+            className="gap-2"
+          >
+            {updateMutation.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <BadgeCheck className="h-4 w-4" />
+            )}
+            Save changes
           </Button>
         </form>
       </div>
+
+      <ProfilePasswordResetSection email={user.email} />
 
       <div className="rounded-xl border border-dashed border-border bg-card/50 p-5 text-ui text-muted-foreground">
         <div className="flex items-start gap-3">

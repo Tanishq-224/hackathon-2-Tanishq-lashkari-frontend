@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
-  AlertCircle,
   ArrowLeft,
   Camera,
   Cpu,
@@ -25,7 +24,9 @@ import {
   type IssueCategory,
   type Urgency,
 } from '@/features/repairs/api/repairsApi'
+import { useAppToast } from '@/components/shared/AppToastProvider'
 import { getApiErrorMessage } from '@/lib/api-client'
+import { scrollToFormField } from '@/lib/form-feedback'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 const DEVICE_OPTIONS: { type: DeviceType; label: string; icon: typeof Smartphone }[] = [
@@ -68,17 +69,16 @@ export function NewRepairRequestPage() {
   const [urgency, setUrgency] = useState<Urgency>('medium')
   const [images, setImages] = useState<ImageAttachment[]>([])
   const [isUploading, setIsUploading] = useState(false)
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const { pushError, pushSuccess, pushWarning } = useAppToast()
 
   const mutation = useMutation({
     mutationFn: createRepairRequest,
     onSuccess: () => {
+      pushSuccess('Repair request submitted. Technicians can now send estimates.')
       void queryClient.invalidateQueries({ queryKey: customerRepairsQueryKey })
       navigate('/dashboard')
     },
-    onError: (err) => {
-      setErrorMessage(getApiErrorMessage(err))
-    },
+    onError: (err) => pushError(getApiErrorMessage(err)),
   })
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -86,12 +86,11 @@ export function NewRepairRequestPage() {
     if (!files || files.length === 0) return
 
     if (images.length + files.length > 5) {
-      setErrorMessage('You can upload a maximum of 5 images.')
+      pushWarning('You can upload a maximum of 5 images.')
       return
     }
 
     setIsUploading(true)
-    setErrorMessage(null)
 
     try {
       const uploadPromises = Array.from(files).map((file) => {
@@ -110,7 +109,7 @@ export function NewRepairRequestPage() {
         setImages((prev) => [...prev, uploaded])
       }
     } catch {
-      setErrorMessage('Failed to upload one or more images. Please try again.')
+      pushError('Failed to upload one or more images. Please try again.')
     } finally {
       setIsUploading(false)
       e.target.value = ''
@@ -123,20 +122,22 @@ export function NewRepairRequestPage() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setErrorMessage(null)
 
     if (!brand.trim()) {
-      setErrorMessage('Please enter the device brand (e.g. Apple, Samsung).')
+      pushError('Please enter the device brand (e.g. Apple, Samsung).')
+      scrollToFormField('brand')
       return
     }
 
     if (!modelName.trim()) {
-      setErrorMessage('Please enter the device model (e.g. iPhone 14 Pro, ThinkPad X1).')
+      pushError('Please enter the device model (e.g. iPhone 14 Pro, ThinkPad X1).')
+      scrollToFormField('modelName')
       return
     }
 
     if (description.trim().length < 10) {
-      setErrorMessage('Please describe the problem in at least 10 characters.')
+      pushError('Please describe the problem in at least 10 characters.')
+      scrollToFormField('description')
       return
     }
 
@@ -170,13 +171,6 @@ export function NewRepairRequestPage() {
         </p>
       </div>
 
-      {errorMessage && (
-        <div className="flex items-center gap-3 rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-ui text-destructive">
-          <AlertCircle className="h-5 w-5 shrink-0" />
-          <span>{errorMessage}</span>
-        </div>
-      )}
-
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Step 1: Device Category */}
         <section className="space-y-4 rounded-xl border border-border bg-card p-6 shadow-sm">
@@ -206,7 +200,7 @@ export function NewRepairRequestPage() {
           </div>
 
           <div className="grid grid-cols-1 gap-4 pt-2 sm:grid-cols-2">
-            <div className="space-y-1.5">
+            <div className="space-y-1.5" data-field-key="brand">
               <label htmlFor="brand" className="text-ui font-medium text-foreground">
                 Brand / Manufacturer *
               </label>
@@ -219,7 +213,7 @@ export function NewRepairRequestPage() {
               />
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-1.5" data-field-key="modelName">
               <label htmlFor="modelName" className="text-ui font-medium text-foreground">
                 Model Name / Number *
               </label>
@@ -265,7 +259,7 @@ export function NewRepairRequestPage() {
             </div>
           </div>
 
-          <div className="space-y-1.5">
+          <div className="space-y-1.5" data-field-key="description">
             <div className="flex justify-between">
               <label htmlFor="description" className="text-ui font-medium text-foreground">
                 Detailed Problem Description *

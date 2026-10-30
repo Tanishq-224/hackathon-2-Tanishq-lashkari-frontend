@@ -64,6 +64,12 @@ export type RepairItem = {
   updatedAt: string
 }
 
+export type EstimateComponentLine = {
+  component: string
+  price: number
+  warrantyMonths: number
+}
+
 export type EstimateItem = {
   id: string
   repairRequestId: string
@@ -75,7 +81,10 @@ export type EstimateItem = {
   turnaroundTime: string
   warrantyMonths: number
   notes: string
-  status: 'pending' | 'accepted' | 'declined'
+  componentLines?: EstimateComponentLine[]
+  labourCost?: number
+  status: 'pending' | 'accepted' | 'declined' | 'withdrawn'
+  declineReason?: string
   createdAt: string
   updatedAt: string
 }
@@ -85,6 +94,13 @@ export type SubmitEstimatePayload = {
   maxCost: number
   turnaroundTime: string
   warrantyMonths: number
+  notes: string
+}
+
+export type DynamicSubmitEstimatePayload = {
+  componentLines: EstimateComponentLine[]
+  labourCost: number
+  turnaroundTime: string
   notes: string
 }
 
@@ -127,7 +143,7 @@ export type QuotationItem = {
   lineItems: QuotationLineItem[]
   totalAmount: number
   estimatedCompletion: string
-  status: 'pending' | 'approved' | 'rejected'
+  status: 'pending' | 'approved' | 'rejected' | 'withdrawn'
   customerDecisionAt?: string
   customerFeedback?: string
   createdAt: string
@@ -241,7 +257,7 @@ export async function fetchRepairEstimates(repairId: string): Promise<EstimateIt
  */
 export async function submitEstimateRequest(
   repairId: string,
-  payload: SubmitEstimatePayload,
+  payload: SubmitEstimatePayload | DynamicSubmitEstimatePayload,
 ): Promise<EstimateItem> {
   const { data } = await apiClient.post<{
     success: boolean
@@ -265,6 +281,56 @@ export async function selectEstimateRequest(
     message: string
   }>(`/api/repairs/${repairId}/select-estimate`, { estimateId })
   return data.data
+}
+
+/**
+ * @description Customer rejects a pending vendor estimate.
+ * @async
+ */
+export async function rejectEstimateRequest(
+  repairId: string,
+  estimateId: string,
+  reason?: string,
+): Promise<EstimateItem> {
+  const { data } = await apiClient.post<{
+    success: boolean
+    data: { estimate: EstimateItem }
+    message: string
+  }>(`/api/repairs/${repairId}/estimates/${estimateId}/reject`, { reason })
+  return data.data.estimate
+}
+
+/**
+ * @description Vendor withdraws a pending preliminary estimate.
+ * @async
+ */
+export async function withdrawEstimateRequest(
+  repairId: string,
+  estimateId: string,
+): Promise<EstimateItem> {
+  const { data } = await apiClient.post<{
+    success: boolean
+    data: { estimate: EstimateItem }
+    message: string
+  }>(`/api/repairs/${repairId}/estimates/${estimateId}/withdraw`)
+  return data.data.estimate
+}
+
+/**
+ * @description Vendor updates a pending preliminary estimate.
+ * @async
+ */
+export async function updateEstimateRequest(
+  repairId: string,
+  estimateId: string,
+  payload: SubmitEstimatePayload | DynamicSubmitEstimatePayload,
+): Promise<EstimateItem> {
+  const { data } = await apiClient.patch<{
+    success: boolean
+    data: { estimate: EstimateItem }
+    message: string
+  }>(`/api/repairs/${repairId}/estimates/${estimateId}`, payload)
+  return data.data.estimate
 }
 
 /**
@@ -308,6 +374,21 @@ export async function decideQuotationRequest(
     data: { quotation: QuotationItem; repair: RepairItem; message: string }
     message: string
   }>(`/api/repairs/${repairId}/quotation/decision`, payload)
+  return data.data
+}
+
+/**
+ * @description Vendor withdraws a pending diagnostic quotation.
+ * @async
+ */
+export async function withdrawQuotationRequest(
+  repairId: string,
+): Promise<{ quotation: QuotationItem; repair: RepairItem; message: string }> {
+  const { data } = await apiClient.post<{
+    success: boolean
+    data: { quotation: QuotationItem; repair: RepairItem; message: string }
+    message: string
+  }>(`/api/repairs/${repairId}/quotation/withdraw`)
   return data.data
 }
 

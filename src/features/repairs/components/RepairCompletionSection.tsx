@@ -19,6 +19,7 @@ import {
   type ImageAttachment,
   type RepairItem,
 } from '@/features/repairs/api/repairsApi'
+import { useAppToast } from '@/components/shared/AppToastProvider'
 import { getApiErrorMessage } from '@/lib/api-client'
 import { cn } from '@/lib/utils'
 
@@ -37,8 +38,7 @@ export function RepairCompletionSection({
   userId,
 }: RepairCompletionSectionProps) {
   const queryClient = useQueryClient()
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const { pushError, pushSuccess, pushWarning } = useAppToast()
   const [benchNotes, setBenchNotes] = useState(repair.repairBenchNotes ?? '')
   const [resolutionSummary, setResolutionSummary] = useState(repair.resolutionSummary ?? '')
   const [afterImages, setAfterImages] = useState<ImageAttachment[]>(
@@ -67,11 +67,10 @@ export function RepairCompletionSection({
         repairBenchNotes: benchNotes.trim() || undefined,
       }),
     onSuccess: (data) => {
-      setSuccessMessage(data.message)
-      setErrorMessage(null)
+      pushSuccess(data.message)
       invalidate()
     },
-    onError: (err) => setErrorMessage(getApiErrorMessage(err)),
+    onError: (err) => pushError(getApiErrorMessage(err)),
   })
 
   const completionMutation = useMutation({
@@ -81,21 +80,19 @@ export function RepairCompletionSection({
         resolutionSummary: resolutionSummary.trim(),
       }),
     onSuccess: (data) => {
-      setSuccessMessage(data.message)
-      setErrorMessage(null)
+      pushSuccess(data.message)
       invalidate()
     },
-    onError: (err) => setErrorMessage(getApiErrorMessage(err)),
+    onError: (err) => pushError(getApiErrorMessage(err)),
   })
 
   const pickupMutation = useMutation({
     mutationFn: () => confirmRepairPickupRequest(repair.id),
     onSuccess: (data) => {
-      setSuccessMessage(data.message)
-      setErrorMessage(null)
+      pushSuccess(data.message)
       invalidate()
     },
-    onError: (err) => setErrorMessage(getApiErrorMessage(err)),
+    onError: (err) => pushError(getApiErrorMessage(err)),
   })
 
   if (!showSection) {
@@ -106,12 +103,11 @@ export function RepairCompletionSection({
     const files = e.target.files
     if (!files?.length) return
     if (afterImages.length + files.length > 5) {
-      setErrorMessage('You can upload up to 5 after-repair photos.')
+      pushWarning('You can upload up to 5 after-repair photos.')
       return
     }
 
     setIsUploading(true)
-    setErrorMessage(null)
     try {
       for (const file of Array.from(files)) {
         const base64 = await new Promise<string>((resolve, reject) => {
@@ -124,7 +120,7 @@ export function RepairCompletionSection({
         setAfterImages((prev) => [...prev, uploaded])
       }
     } catch {
-      setErrorMessage('Failed to upload proof photo. Please try again.')
+      pushError('Failed to upload proof photo. Please try again.')
     } finally {
       setIsUploading(false)
       e.target.value = ''
@@ -146,17 +142,6 @@ export function RepairCompletionSection({
           Repair Execution & Completion
         </h2>
       </div>
-
-      {errorMessage && (
-        <p className="mt-4 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-ui text-destructive">
-          {errorMessage}
-        </p>
-      )}
-      {successMessage && (
-        <p className="mt-4 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-ui text-emerald-600 dark:text-emerald-400">
-          {successMessage}
-        </p>
-      )}
 
       {isAssignedVendor && repair.status === 'quote_approved' && (
         <div className="mt-5 space-y-4">

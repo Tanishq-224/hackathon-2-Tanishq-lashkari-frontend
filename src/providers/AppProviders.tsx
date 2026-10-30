@@ -1,6 +1,8 @@
 import { QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 
+import { RealtimeSync } from '@/components/shared/RealtimeSync'
+import { AppToastProvider } from '@/components/shared/AppToastProvider'
 import { createQueryClient } from '@/lib/query-client'
 import { ThemeProvider } from '@/providers/ThemeProvider'
 
@@ -18,7 +20,12 @@ const queryClient = createQueryClient()
 export function AppProviders({ children }: AppProvidersProps) {
   return (
     <ThemeProvider>
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      <QueryClientProvider client={queryClient}>
+        <AppToastProvider>
+          <RealtimeSync />
+          {children}
+        </AppToastProvider>
+      </QueryClientProvider>
     </ThemeProvider>
   )
 }
