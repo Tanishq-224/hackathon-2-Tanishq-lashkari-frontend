@@ -1,6 +1,7 @@
 import { ArrowRight } from 'lucide-react'
 import {
   useCallback,
+  useEffect,
   useLayoutEffect,
   useRef,
   useState,
@@ -16,6 +17,14 @@ import { SectionHeader } from '@/components/shared/SectionHeader'
 import { SectionSurface } from '@/components/shared/SectionSurface'
 import { useGsapHorizontalScroll } from '@/hooks/useGsapHorizontalScroll'
 import { cn } from '@/lib/utils'
+
+/** @description Viewports below Tailwind `md` use the one-card mobile carousel. */
+const WHY_MOBILE_CAROUSEL_MQ = '(max-width: 767px)'
+
+/** @description Auto-advance interval for the mobile Why Repairex carousel. */
+const WHY_MOBILE_AUTO_SLIDE_MS = 4500
+
+type WhyLayoutMode = 'mobile-carousel' | 'gsap' | 'reduced-native'
 
 type WhyCard =
   | {
@@ -217,14 +226,18 @@ function WhyCaption({
 function WhyCardItem({
   card,
   snap,
+  mobileSingle,
 }: {
   card: WhyCard
-  snap: boolean
+  snap?: boolean
+  mobileSingle?: boolean
 }) {
   const shellClass = cn(
     'flex shrink-0',
     whyCardHeightClass,
-    whyCardWidthClass(card.kind === 'visual' ? card.wide : false),
+    mobileSingle
+      ? 'w-full max-w-none'
+      : whyCardWidthClass(card.kind === 'visual' ? card.wide : false),
     snap && 'snap-center',
   )
 
@@ -243,8 +256,62 @@ function WhyCardItem({
   )
 }
 
+type WhyMobileCarouselProps = {
+  activeIndex: number
+  enabled: boolean
+  onIndexChange: (index: number) => void
+}
+
 /**
- * @description Why Repairex — pinned GSAP horizontal scrub on all viewports (native swipe rail only for reduced motion).
+ * @description Full-width one-card-at-a-time slider for phones with auto-advance.
+ */
+function WhyMobileCarousel({
+  activeIndex,
+  enabled,
+  onIndexChange,
+}: WhyMobileCarouselProps) {
+  useEffect(() => {
+    if (!enabled) {
+      return undefined
+    }
+
+    const motionMedia = window.matchMedia('(prefers-reduced-motion: reduce)')
+    if (motionMedia.matches) {
+      return undefined
+    }
+
+    const timerId = window.setInterval(() => {
+      onIndexChange((activeIndex + 1) % whyCards.length)
+    }, WHY_MOBILE_AUTO_SLIDE_MS)
+
+    return () => {
+      window.clearInterval(timerId)
+    }
+  }, [activeIndex, enabled, onIndexChange])
+
+  return (
+    <div
+      className="w-full overflow-hidden md:hidden"
+      aria-live="polite"
+      aria-roledescription="carousel"
+      aria-label="Why Repairex highlights"
+    >
+      <div
+        className="flex transition-transform duration-500 ease-out motion-reduce:transition-none"
+        style={{ transform: `translateX(-${activeIndex * 100}%)` }}
+      >
+        {whyCards.map((card) => (
+          <div key={card.key} className="w-full shrink-0 basis-full px-4">
+            <WhyCardItem card={card} mobileSingle />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/**
+ * @description Why Repairex — GSAP horizontal scrub on tablet/desktop; mobile one-card carousel.
  * @returns {JSX.Element} Why choose section.
  */
 export function WhyChooseSection() {
@@ -254,33 +321,41 @@ export function WhyChooseSection() {
   const captionDescriptionRef = useRef<HTMLParagraphElement>(null)
   const scrubCaptionIndexRef = useRef(0)
   const [activeIndex, setActiveIndex] = useState(0)
-  const [useNativeRail, setUseNativeRail] = useState(() => {
+  const [layoutMode, setLayoutMode] = useState<WhyLayoutMode>(() => {
     if (typeof window === 'undefined') {
-      return false
+      return 'gsap'
     }
-    return window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (window.matchMedia(WHY_MOBILE_CAROUSEL_MQ).matches) {
+      return 'mobile-carousel'
+    }
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return 'reduced-native'
+    }
+    return 'gsap'
   })
   const [pinStartOffset, setPinStartOffset] = useState(72)
 
   useLayoutEffect(() => {
     const motionMedia = window.matchMedia('(prefers-reduced-motion: reduce)')
-    const compactNavMedia = window.matchMedia('(max-width: 639px)')
+    const mobileMedia = window.matchMedia(WHY_MOBILE_CAROUSEL_MQ)
 
-    /**
-     * @description Falls back to native horizontal swipe only when the user prefers reduced motion.
-     * @returns {void}
-     */
     const sync = () => {
-      setUseNativeRail(motionMedia.matches)
-      setPinStartOffset(compactNavMedia.matches ? 64 : 72)
+      if (mobileMedia.matches) {
+        setLayoutMode('mobile-carousel')
+      } else if (motionMedia.matches) {
+        setLayoutMode('reduced-native')
+      } else {
+        setLayoutMode('gsap')
+      }
+      setPinStartOffset(72)
     }
 
     sync()
     motionMedia.addEventListener('change', sync)
-    compactNavMedia.addEventListener('change', sync)
+    mobileMedia.addEventListener('change', sync)
     return () => {
       motionMedia.removeEventListener('change', sync)
-      compactNavMedia.removeEventListener('change', sync)
+      mobileMedia.removeEventListener('change', sync)
     }
   }, [])
 
@@ -310,7 +385,7 @@ export function WhyChooseSection() {
   }, [])
 
   useGsapHorizontalScroll(pinRef, railRef, {
-    enabled: !useNativeRail,
+    enabled: layoutMode === 'gsap',
     onProgress: handleProgress,
     pinStartOffset,
   })
@@ -358,7 +433,7 @@ export function WhyChooseSection() {
         ref={pinRef}
         className={cn(
           'relative flex flex-col py-6 sm:py-8',
-          !useNativeRail && 'min-h-[calc(100dvh-4.5rem)]',
+          layoutMode === 'gsap' && 'min-h-[calc(100dvh-4.5rem)]',
         )}
       >
         <Container className="shrink-0">
@@ -378,32 +453,44 @@ export function WhyChooseSection() {
 
         <div
           className={cn(
-            'mt-auto flex w-full flex-col gap-6 pt-6 sm:gap-8 sm:pt-8',
-            !useNativeRail && 'pb-4 sm:pb-6',
+            'flex w-full flex-col gap-6 pt-6 sm:gap-8 sm:pt-8',
+            layoutMode === 'gsap' && 'mt-auto pb-4 sm:pb-6',
           )}
         >
+          <WhyMobileCarousel
+            enabled={layoutMode === 'mobile-carousel'}
+            activeIndex={activeIndex}
+            onIndexChange={(index) => {
+              setActiveIndex(index)
+              scrubCaptionIndexRef.current = index
+            }}
+          />
+
           <div
             className={cn(
-              useNativeRail ? 'overflow-visible' : 'overflow-x-clip overflow-y-visible',
+              'hidden md:block',
+              layoutMode === 'gsap'
+                ? 'overflow-x-clip overflow-y-visible'
+                : 'overflow-visible',
             )}
           >
             <div
               ref={railRef}
-              data-native-rail={useNativeRail ? 'true' : undefined}
+              data-native-rail={layoutMode === 'reduced-native' ? 'true' : undefined}
               className={cn(
                 'why-cinematic-rail flex items-stretch gap-5 sm:gap-6',
-                useNativeRail
-                  ? '-mx-1 snap-x snap-mandatory overflow-x-auto overscroll-x-contain px-1 pb-2'
-                  : 'w-max pr-[max(1rem,5vw)] pl-[max(1rem,calc((100vw-min(100vw-2rem,80rem))/2+0.5rem))] will-change-transform touch-pan-y',
+                layoutMode === 'gsap'
+                  ? 'w-max pr-[max(1rem,5vw)] pl-[max(1rem,calc((100vw-min(100vw-2rem,80rem))/2+0.5rem))] will-change-transform touch-pan-y'
+                  : '-mx-1 snap-x snap-mandatory overflow-x-auto overscroll-x-contain px-1 pb-2',
               )}
-              onScroll={useNativeRail ? syncActiveFromScroll : undefined}
+              onScroll={layoutMode === 'reduced-native' ? syncActiveFromScroll : undefined}
               aria-label="Why Repairex highlights"
             >
               {whyCards.map((card) => (
                 <WhyCardItem
                   key={card.key}
                   card={card}
-                  snap={useNativeRail}
+                  snap={layoutMode === 'reduced-native'}
                 />
               ))}
             </div>
@@ -413,8 +500,8 @@ export function WhyChooseSection() {
             <WhyCaption
               title={activeTitle}
               description={activeDescription}
-              titleRef={useNativeRail ? undefined : captionTitleRef}
-              descriptionRef={useNativeRail ? undefined : captionDescriptionRef}
+              titleRef={layoutMode === 'gsap' ? captionTitleRef : undefined}
+              descriptionRef={layoutMode === 'gsap' ? captionDescriptionRef : undefined}
             />
           </Container>
         </div>
