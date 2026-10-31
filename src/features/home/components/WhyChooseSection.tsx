@@ -241,7 +241,7 @@ function WhyCardItem({
 }
 
 /**
- * @description Why Repairex — pinned GSAP horizontal rail on desktop, native scroll on small screens.
+ * @description Why Repairex — pinned GSAP horizontal scrub on all viewports (native swipe rail only for reduced motion).
  * @returns {JSX.Element} Why choose section.
  */
 export function WhyChooseSection() {
@@ -253,32 +253,31 @@ export function WhyChooseSection() {
   const [activeIndex, setActiveIndex] = useState(0)
   const [useNativeRail, setUseNativeRail] = useState(() => {
     if (typeof window === 'undefined') {
-      return true
+      return false
     }
-    return (
-      window.matchMedia('(max-width: 1023px)').matches ||
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    )
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches
   })
+  const [pinStartOffset, setPinStartOffset] = useState(72)
 
   useLayoutEffect(() => {
     const motionMedia = window.matchMedia('(prefers-reduced-motion: reduce)')
-    const layoutMedia = window.matchMedia('(max-width: 1023px)')
+    const compactNavMedia = window.matchMedia('(max-width: 639px)')
 
     /**
-     * @description Uses native horizontal scroll below desktop or when motion is reduced.
+     * @description Falls back to native horizontal swipe only when the user prefers reduced motion.
      * @returns {void}
      */
     const sync = () => {
-      setUseNativeRail(layoutMedia.matches || motionMedia.matches)
+      setUseNativeRail(motionMedia.matches)
+      setPinStartOffset(compactNavMedia.matches ? 64 : 72)
     }
 
     sync()
     motionMedia.addEventListener('change', sync)
-    layoutMedia.addEventListener('change', sync)
+    compactNavMedia.addEventListener('change', sync)
     return () => {
       motionMedia.removeEventListener('change', sync)
-      layoutMedia.removeEventListener('change', sync)
+      compactNavMedia.removeEventListener('change', sync)
     }
   }, [])
 
@@ -310,7 +309,7 @@ export function WhyChooseSection() {
   useGsapHorizontalScroll(pinRef, railRef, {
     enabled: !useNativeRail,
     onProgress: handleProgress,
-    pinStartOffset: 72,
+    pinStartOffset,
   })
 
   /**
@@ -356,7 +355,7 @@ export function WhyChooseSection() {
         ref={pinRef}
         className={cn(
           'relative flex flex-col justify-center py-8',
-          !useNativeRail && 'min-h-[calc(100dvh-4.5rem)]',
+          !useNativeRail && 'min-h-[calc(100dvh-4rem)] sm:min-h-[calc(100dvh-4.5rem)]',
         )}
       >
         <Container>
@@ -386,7 +385,7 @@ export function WhyChooseSection() {
               'why-cinematic-rail flex items-stretch gap-5 sm:gap-6',
               useNativeRail
                 ? '-mx-1 snap-x snap-mandatory overflow-x-auto overscroll-x-contain px-1 pb-4'
-                : 'w-max pr-[max(1.5rem,6vw)] pl-[max(1rem,calc((100vw-min(100vw-2rem,80rem))/2))] will-change-transform',
+                : 'w-max pr-[max(1rem,5vw)] pl-[max(1rem,calc((100vw-min(100vw-2rem,80rem))/2+0.5rem))] will-change-transform touch-pan-y',
             )}
             onScroll={useNativeRail ? syncActiveFromScroll : undefined}
             aria-label="Why Repairex highlights"
@@ -400,7 +399,7 @@ export function WhyChooseSection() {
             ))}
           </div>
         </div>
-        <Container className={cn('mt-8', useNativeRail && 'pb-6 sm:pb-8')}>
+        <Container className="mt-8 pb-6 sm:pb-8">
           <WhyCaption
             title={activeTitle}
             description={activeDescription}

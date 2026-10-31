@@ -407,10 +407,8 @@
     overscroll-behavior-x: contain;
   }
 
-  @media (min-width: 1024px) {
-    .why-cinematic-rail:not([data-native-rail='true']) {
-      scroll-snap-type: none;
-    }
+  .why-cinematic-rail:not([data-native-rail='true']) {
+    scroll-snap-type: none;
   }
 
   .why-choose-section {
