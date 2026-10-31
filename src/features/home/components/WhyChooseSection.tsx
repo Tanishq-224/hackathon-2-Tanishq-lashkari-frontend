@@ -39,6 +39,18 @@ type WhyCard =
       mockupAlign?: 'top' | 'center'
     }
 
+/** @description Shared rail card height so stat + visual tiles align on laptop. */
+const whyCardHeightClass =
+  'h-[min(64vh,22.5rem)] sm:h-[24rem] lg:h-[24rem]'
+
+/** @description Shared rail card widths (wide tiles use same height). */
+function whyCardWidthClass(wide?: boolean) {
+  return cn(
+    'w-[min(78vw,20rem)] sm:w-[24rem] lg:w-[26rem]',
+    wide && 'sm:w-[min(92vw,36rem)] lg:w-[38rem]',
+  )
+}
+
 const whyCards: WhyCard[] = [
   {
     key: 'upfront',
@@ -105,7 +117,7 @@ type WhyStatCardProps = {
  */
 function WhyStatCard({ card }: WhyStatCardProps) {
   return (
-    <article className="why-cinematic-stat flex h-[min(68vh,25rem)] w-[min(78vw,19rem)] shrink-0 flex-col justify-between rounded-[var(--card-marketing-radius)] p-6 text-white sm:w-[22rem] lg:h-[min(46vh,22rem)]">
+    <article className="why-cinematic-stat flex h-full w-full flex-col justify-between rounded-[var(--card-marketing-radius)] p-6 text-white">
       <div>
         <span className="text-caption font-medium text-white/55">{card.eyebrow}</span>
         <p className="font-display mt-4 text-[clamp(1.5rem,3.2vw,2rem)] font-bold leading-tight tracking-tight">
@@ -114,7 +126,9 @@ function WhyStatCard({ card }: WhyStatCardProps) {
       </div>
       <div>
         <h3 className="font-display text-h3 font-semibold">{card.title}</h3>
-        <p className="mt-2 text-ui leading-relaxed text-white/70">{card.description}</p>
+        <p className="mt-2 text-ui leading-relaxed text-white/70 line-clamp-4">
+          {card.description}
+        </p>
       </div>
     </article>
   )
@@ -131,31 +145,14 @@ type WhyVisualCardProps = {
  */
 function WhyVisualCard({ card }: WhyVisualCardProps) {
   return (
-    <article
-      className={cn(
-        'theme-marketing-card flex h-[min(68vh,25rem)] w-[min(78vw,20rem)] shrink-0 flex-col overflow-hidden p-0 sm:w-[24rem] lg:h-[min(46vh,22rem)]',
-        card.wide && 'sm:w-[min(88vw,34rem)]',
-      )}
-    >
-      <div
-        className={cn(
-          'relative min-h-0 flex-1 overflow-hidden',
-          card.imageFit === 'mockup' ? 'min-h-[11.5rem] bg-card sm:min-h-[13rem]' : 'bg-muted',
-        )}
-      >
+    <article className="theme-marketing-card flex h-full w-full flex-col overflow-hidden p-0">
+      <div className="relative min-h-0 flex-1 overflow-hidden bg-muted">
         <img
           src={card.imageSrc}
           alt={card.imageAlt}
           className={cn(
-            'why-cinematic-image block h-full w-full',
-            card.imageFit === 'mockup'
-              ? cn(
-                  'object-cover scale-[1.015]',
-                  card.mockupAlign === 'center'
-                    ? 'object-center'
-                    : 'object-top [object-position:center_0%]',
-                )
-              : 'object-cover object-center',
+            'why-cinematic-image absolute inset-0 size-full object-cover',
+            card.mockupAlign === 'center' ? 'object-center' : 'object-top',
           )}
           loading="lazy"
         />
@@ -166,9 +163,11 @@ function WhyVisualCard({ card }: WhyVisualCardProps) {
           />
         ) : null}
       </div>
-      <div className="border-t border-border/80 p-5 sm:p-6">
-        <h3 className="font-display text-h3 font-semibold text-foreground">{card.title}</h3>
-        <p className="mt-2 text-ui leading-relaxed text-muted-foreground">
+      <div className="shrink-0 border-t border-border/80 p-4 sm:p-5">
+        <h3 className="font-display text-h3 font-semibold text-foreground line-clamp-2">
+          {card.title}
+        </h3>
+        <p className="mt-1.5 text-ui leading-relaxed text-muted-foreground line-clamp-3">
           {card.description}
         </p>
       </div>
@@ -198,7 +197,7 @@ function WhyCaption({
   descriptionRef,
 }: WhyCaptionElementProps) {
   return (
-    <div className="grid min-h-[9.5rem] gap-4 border-t border-border/80 pt-6 sm:min-h-[8.5rem] lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1.4fr)] lg:min-h-[7.5rem] lg:gap-10">
+    <div className="grid min-h-[7.5rem] gap-4 border-t border-border/80 pt-5 sm:min-h-[7rem] lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1.4fr)] lg:min-h-[6.5rem] lg:gap-10 lg:pt-6">
       <h3
         ref={titleRef}
         className="font-display text-h2 font-semibold tracking-tight text-foreground"
@@ -222,19 +221,23 @@ function WhyCardItem({
   card: WhyCard
   snap: boolean
 }) {
+  const shellClass = cn(
+    'flex shrink-0',
+    whyCardHeightClass,
+    whyCardWidthClass(card.kind === 'visual' ? card.wide : false),
+    snap && 'snap-center',
+  )
+
   if (card.kind === 'stat') {
     return (
-      <div
-        data-why-card
-        className={cn('shrink-0', snap && 'snap-center')}
-      >
+      <div data-why-card className={shellClass}>
         <WhyStatCard card={card} />
       </div>
     )
   }
 
   return (
-    <div data-why-card className={cn('shrink-0', snap && 'snap-center')}>
+    <div data-why-card className={shellClass}>
       <WhyVisualCard card={card} />
     </div>
   )
@@ -354,11 +357,11 @@ export function WhyChooseSection() {
       <div
         ref={pinRef}
         className={cn(
-          'relative flex flex-col justify-center py-8',
-          !useNativeRail && 'min-h-[calc(100dvh-4rem)] sm:min-h-[calc(100dvh-4.5rem)]',
+          'relative flex flex-col py-6 sm:py-8',
+          !useNativeRail && 'min-h-[calc(100dvh-4.5rem)]',
         )}
       >
-        <Container>
+        <Container className="shrink-0">
           <SectionHeader
             eyebrow="Why Repairex"
             title="Built for clarity before you pay"
@@ -372,41 +375,49 @@ export function WhyChooseSection() {
             <ArrowRight aria-hidden className="size-4" />
           </Link>
         </Container>
+
         <div
           className={cn(
-            'mt-8 sm:mt-10',
-            useNativeRail ? 'overflow-visible' : 'overflow-x-clip',
+            'mt-auto flex w-full flex-col gap-6 pt-6 sm:gap-8 sm:pt-8',
+            !useNativeRail && 'pb-4 sm:pb-6',
           )}
         >
           <div
-            ref={railRef}
-            data-native-rail={useNativeRail ? 'true' : undefined}
             className={cn(
-              'why-cinematic-rail flex items-stretch gap-5 sm:gap-6',
-              useNativeRail
-                ? '-mx-1 snap-x snap-mandatory overflow-x-auto overscroll-x-contain px-1 pb-4'
-                : 'w-max pr-[max(1rem,5vw)] pl-[max(1rem,calc((100vw-min(100vw-2rem,80rem))/2+0.5rem))] will-change-transform touch-pan-y',
+              useNativeRail ? 'overflow-visible' : 'overflow-x-clip overflow-y-visible',
             )}
-            onScroll={useNativeRail ? syncActiveFromScroll : undefined}
-            aria-label="Why Repairex highlights"
           >
-            {whyCards.map((card) => (
-              <WhyCardItem
-                key={card.key}
-                card={card}
-                snap={useNativeRail}
-              />
-            ))}
+            <div
+              ref={railRef}
+              data-native-rail={useNativeRail ? 'true' : undefined}
+              className={cn(
+                'why-cinematic-rail flex items-stretch gap-5 sm:gap-6',
+                useNativeRail
+                  ? '-mx-1 snap-x snap-mandatory overflow-x-auto overscroll-x-contain px-1 pb-2'
+                  : 'w-max pr-[max(1rem,5vw)] pl-[max(1rem,calc((100vw-min(100vw-2rem,80rem))/2+0.5rem))] will-change-transform touch-pan-y',
+              )}
+              onScroll={useNativeRail ? syncActiveFromScroll : undefined}
+              aria-label="Why Repairex highlights"
+            >
+              {whyCards.map((card) => (
+                <WhyCardItem
+                  key={card.key}
+                  card={card}
+                  snap={useNativeRail}
+                />
+              ))}
+            </div>
           </div>
+
+          <Container className="shrink-0 pb-2 sm:pb-4">
+            <WhyCaption
+              title={activeTitle}
+              description={activeDescription}
+              titleRef={useNativeRail ? undefined : captionTitleRef}
+              descriptionRef={useNativeRail ? undefined : captionDescriptionRef}
+            />
+          </Container>
         </div>
-        <Container className="mt-8 pb-6 sm:pb-8">
-          <WhyCaption
-            title={activeTitle}
-            description={activeDescription}
-            titleRef={useNativeRail ? undefined : captionTitleRef}
-            descriptionRef={useNativeRail ? undefined : captionDescriptionRef}
-          />
-        </Container>
       </div>
     </SectionSurface>
   )
