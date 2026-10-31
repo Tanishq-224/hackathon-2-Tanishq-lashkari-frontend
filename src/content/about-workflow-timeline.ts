@@ -39,6 +39,13 @@ export const REPAIREX_ABOUT_TIMELINE_TOP: TimelineJourneyItem[] = [
   },
 ]
 
+/** @description All About workflow phases in journey order. */
+export function getRepairexAboutTimelinePhases(): TimelineJourneyItem[] {
+  return [...REPAIREX_ABOUT_TIMELINE_TOP, ...REPAIREX_ABOUT_TIMELINE_BOTTOM].sort(
+    (a, b) => (a.sortKey ?? 0) - (b.sortKey ?? 0),
+  )
+}
+
 export const REPAIREX_ABOUT_TIMELINE_BOTTOM: TimelineJourneyItem[] = [
   {
     id: 'rx-step-05',

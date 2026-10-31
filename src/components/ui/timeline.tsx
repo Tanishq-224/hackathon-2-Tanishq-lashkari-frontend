@@ -148,8 +148,10 @@ function sortJourneyItems(items: TimelineJourneyItem[]) {
 }
 
 function journeyHeadline(item: TimelineJourneyItem) {
-  return item.headline ?? `${item.year} ${item.month}`
+  return item.headline ?? item.content.slice(0, 48)
 }
+
+const DESKTOP_NAV_OFFSET = '4.5rem'
 
 /**
  * @description Horizontal scroll-pinned timeline with GSAP ScrollTrigger (Lenis-safe).
@@ -170,6 +172,7 @@ export function Timeline({
   className,
 }: TimelineProps) {
   const sectionRef = useRef<HTMLElement>(null)
+  const pinViewportRef = useRef<HTMLDivElement>(null)
   const wholeSliderRef = useRef<HTMLDivElement>(null)
   const reducedMotion = usePrefersReducedMotion()
   const animationDuration = duration ?? scrollDuration
@@ -192,9 +195,10 @@ export function Timeline({
 
   useLayoutEffect(() => {
     const section = sectionRef.current
+    const pinViewport = pinViewportRef.current
     const slider = wholeSliderRef.current
 
-    if (!section || !slider) {
+    if (!section || !pinViewport || !slider) {
       return undefined
     }
 
@@ -211,9 +215,12 @@ export function Timeline({
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: section,
-          start: 'top top',
+          start: `top top+=${DESKTOP_NAV_OFFSET}`,
           end: slideEnd,
           scrub: true,
+          pin: pinViewport,
+          pinSpacing: true,
+          anticipatePin: 1,
           invalidateOnRefresh: true,
           ...scrollerProps,
         },
@@ -281,7 +288,7 @@ export function Timeline({
             mask: 'lines',
           })
         } catch {
-          return
+          /* Club SplitText unavailable — fall back to whole nodes in createItemTimeline */
         }
       })
 
@@ -299,8 +306,21 @@ export function Timeline({
       ) => {
         const lineSelector = `.jl-${item.id}`
         const dotSelector = `.jd-${item.id}`
-        const titleLines = titleSplits[item.id]?.lines || []
-        const descriptionLines = descriptionSplits[item.id]?.lines || []
+        const titleEl = section.querySelector(`.title-${item.id}`)
+        const descriptionEl = section.querySelector(`.description-${item.id}`)
+        const titleLines =
+          titleSplits[item.id]?.lines?.length && titleSplits[item.id]?.lines
+            ? titleSplits[item.id].lines
+            : titleEl
+              ? [titleEl]
+              : []
+        const descriptionLines =
+          descriptionSplits[item.id]?.lines?.length &&
+          descriptionSplits[item.id]?.lines
+            ? descriptionSplits[item.id].lines
+            : descriptionEl
+              ? [descriptionEl]
+              : []
 
         const isTop = topJourneyData.some((topItem) => topItem.id === item.id)
 
@@ -407,7 +427,13 @@ export function Timeline({
       window.removeEventListener('load', refreshScrollTriggers)
       ctx.revert()
     }
-  }, [allJourneyItems, normalizedDuration, reducedMotion, topJourneyData])
+  }, [
+    allJourneyItems,
+    normalizedDuration,
+    reducedMotion,
+    topJourneyData,
+    bottomJourneyData,
+  ])
 
   return (
     <section
@@ -417,7 +443,10 @@ export function Timeline({
       style={sectionStyle}
       aria-label="Repair workflow overview — structured repair journey timeline"
     >
-      <div className="sticky top-0 h-screen w-full overflow-hidden pt-[10%] max-[600px]:top-[5%]">
+      <div
+        ref={pinViewportRef}
+        className="h-screen w-full overflow-hidden pt-[10%] max-[600px]:pt-[5%]"
+      >
         <div
           ref={wholeSliderRef}
           className="mr-[2vw] flex h-[30vw] w-[240vw] items-center gap-[5vw] px-[5vw] max-[600px]:h-[80vh] max-[600px]:w-[800vw] max-[600px]:px-[7vw]"
