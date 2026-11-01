@@ -19,6 +19,8 @@ import { EstimateDetailPage } from '@/pages/EstimateDetailPage'
 import { VendorEstimateSubmitPage } from '@/pages/VendorEstimateSubmitPage'
 import { VendorMarketplacePage } from '@/pages/VendorMarketplacePage'
 import { VerifyOtpPage } from '@/pages/VerifyOtpPage'
+import { AdminRouteGuard } from '@/components/auth/AdminRouteGuard'
+import { AdminContactInboxPage } from '@/pages/AdminContactInboxPage'
 
 /**
  * @description Application route tree with shared public chrome (Navbar & Footer) across marketing and auth views.
@@ -61,6 +63,11 @@ export function createAppRouter() {
         { path: 'profile', element: <DashboardProfilePage /> },
         { path: 'repairs/:id', element: <RepairDetailPage /> },
         { path: 'repairs/:id/estimates/:estimateId', element: <EstimateDetailPage /> },
+        {
+          path: 'admin',
+          element: <AdminRouteGuard />,
+          children: [{ path: 'contact', element: <AdminContactInboxPage /> }],
+        },
       ],
     },
   ])

@@ -1,5 +1,13 @@
 import { Link, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { ArrowLeft, PlusCircle, Store, UserCircle, Wrench, type LucideIcon } from 'lucide-react'
+import {
+  ArrowLeft,
+  Inbox,
+  PlusCircle,
+  Store,
+  UserCircle,
+  Wrench,
+  type LucideIcon,
+} from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 
 import { DashboardWorkspaceHeader } from '@/components/layout/DashboardWorkspaceHeader'
@@ -74,8 +82,24 @@ export function DashboardLayout() {
   }
 
   const isVendor = user?.role === 'vendor'
+  const isAdmin = user?.role === 'admin'
 
-  const navItems: DashboardNavItem[] = isVendor
+  const navItems: DashboardNavItem[] = isAdmin
+    ? [
+        {
+          label: 'Contact inbox',
+          to: '/dashboard/admin/contact',
+          icon: Inbox,
+          end: true,
+        },
+        {
+          label: 'My Profile',
+          to: '/dashboard/profile',
+          icon: UserCircle,
+          end: true,
+        },
+      ]
+    : isVendor
     ? [
         {
           label: 'Marketplace Feed',
@@ -123,13 +147,16 @@ export function DashboardLayout() {
     if (item.to === '/dashboard/marketplace') {
       return location.pathname.startsWith('/dashboard/marketplace')
     }
+    if (item.to === '/dashboard/admin/contact') {
+      return location.pathname.startsWith('/dashboard/admin/contact')
+    }
     return location.pathname === item.to
   }
 
   return (
     <div className="flex min-h-dvh flex-col bg-background text-foreground">
       <DashboardWorkspaceHeader
-        isVendor={isVendor}
+        isVendor={isVendor && !isAdmin}
         navItems={navItems}
         userFullName={user?.fullName}
         userEmail={user?.email}
@@ -194,7 +221,22 @@ export function DashboardLayout() {
         className="dashboard-bottom-nav theme-bottom-nav fixed bottom-0 left-0 right-0 z-40 flex h-[4.25rem] items-center gap-1 border-t border-border px-2 pb-[env(safe-area-inset-bottom,0px)] lg:hidden"
         aria-label="Mobile Navigation"
       >
-        {isVendor ? (
+        {isAdmin ? (
+          <>
+            <DashboardBottomNavTab
+              to="/dashboard/admin/contact"
+              label="Inbox"
+              icon={Inbox}
+              active={location.pathname.startsWith('/dashboard/admin/contact')}
+            />
+            <DashboardBottomNavTab
+              to="/dashboard/profile"
+              label="Profile"
+              icon={UserCircle}
+              active={location.pathname === '/dashboard/profile'}
+            />
+          </>
+        ) : isVendor ? (
           <>
             <DashboardBottomNavTab
               to="/dashboard/marketplace"

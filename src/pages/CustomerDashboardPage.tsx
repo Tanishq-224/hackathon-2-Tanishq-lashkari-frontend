@@ -25,6 +25,7 @@ import {
 } from '@/features/repairs/api/repairsApi'
 import { useAuthSession } from '@/hooks/useAuthSession'
 import { useQuery } from '@tanstack/react-query'
+import { Navigate } from 'react-router-dom'
 
 function getDeviceIcon(type: DeviceType) {
   switch (type) {
@@ -102,12 +103,17 @@ export function CustomerDashboardPage() {
   const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all')
   const { user } = useAuthSession()
   const isVendor = user?.role === 'vendor'
+  const isAdmin = user?.role === 'admin'
 
   const { data: repairs = [], isLoading, error } = useQuery({
     queryKey: isVendor ? vendorRepairsQueryKey : customerRepairsQueryKey,
     queryFn: fetchMyRepairRequests,
-    enabled: Boolean(user),
+    enabled: Boolean(user) && !isAdmin,
   })
+
+  if (isAdmin) {
+    return <Navigate to="/dashboard/admin/contact" replace />
+  }
 
   const activeRepairs = repairs.filter(
     (r) => r.status !== 'completed' && r.status !== 'cancelled',
