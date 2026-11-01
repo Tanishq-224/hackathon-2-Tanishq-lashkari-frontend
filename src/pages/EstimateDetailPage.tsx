@@ -15,6 +15,7 @@ import {
   withdrawEstimateRequest,
 } from '@/features/repairs/api/repairsApi'
 import { isEstimateActionable } from '@/features/repairs/lib/estimate-status'
+import { rejectEstimateReasonSchema } from '@/features/repairs/lib/repair-feedback-schemas'
 import { useAppToast } from '@/components/shared/AppToastProvider'
 import { useAuthSession } from '@/hooks/useAuthSession'
 import { useRepairRealtimeSubscription } from '@/hooks/useRepairRealtimeSubscription'
@@ -78,7 +79,13 @@ export function EstimateDetailPage() {
   })
 
   const rejectMutation = useMutation({
-    mutationFn: () => rejectEstimateRequest(repairId, estimateId, rejectReason.trim() || undefined),
+    mutationFn: () => {
+      const parsed = rejectEstimateReasonSchema.safeParse(rejectReason)
+      if (!parsed.success) {
+        throw new Error(parsed.error.issues[0]?.message ?? 'Invalid reason.')
+      }
+      return rejectEstimateRequest(repairId, estimateId, parsed.data)
+    },
     onSuccess: () => {
       pushSuccess('Estimate rejected.')
       void queryClient.invalidateQueries({ queryKey: repairEstimatesQueryKey(repairId) })

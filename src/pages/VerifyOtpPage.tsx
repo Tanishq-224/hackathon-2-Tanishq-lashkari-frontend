@@ -15,6 +15,7 @@ import {
 import { authSessionQueryKey } from '@/hooks/useAuthSession'
 import { useAppToast } from '@/components/shared/AppToastProvider'
 import { getApiErrorMessage } from '@/lib/api-client'
+import { sanitizeOtpInput } from '@/lib/validation/fields'
 import { cn } from '@/lib/utils'
 
 /**
@@ -132,7 +133,7 @@ export function VerifyOtpPage() {
               'h-12 text-center text-h3 tracking-[0.35em] font-mono',
               errors.otp && 'border-destructive focus-visible:ring-destructive/20',
             )}
-            {...register('otp')}
+            {...register('otp', { setValueAs: sanitizeOtpInput })}
           />
           {errors.otp ? (
             <p className="text-caption text-destructive">{errors.otp.message}</p>

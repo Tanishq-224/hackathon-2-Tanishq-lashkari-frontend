@@ -44,6 +44,11 @@ Object.defineProperty(globalThis, 'ResizeObserver', {
   value: ResizeObserverMock,
 })
 
+Object.defineProperty(window, 'scrollTo', {
+  writable: true,
+  value: () => undefined,
+})
+
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
   value: (query: string) => ({

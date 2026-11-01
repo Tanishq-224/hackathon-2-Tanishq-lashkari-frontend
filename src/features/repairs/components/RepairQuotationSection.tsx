@@ -1,3 +1,5 @@
+import { quotationDeclineFeedbackSchema } from '@/features/repairs/lib/repair-feedback-schemas'
+import { vendorQuotationFormSchema } from '@/features/repairs/lib/quotation-form-schema'
 import { useState } from 'react'
 import {
   CheckCircle,
@@ -167,30 +169,14 @@ export function RepairQuotationSection({
   function handleVendorSubmit(e: React.FormEvent) {
     e.preventDefault()
 
-    if (diagnosticFindings.trim().length < 10) {
-      pushError('Diagnostic findings must be at least 10 characters long.')
-      return
-    }
+    const parsed = vendorQuotationFormSchema.safeParse({
+      diagnosticFindings,
+      lineItems,
+      estimatedCompletion,
+    })
 
-    if (lineItems.length === 0) {
-      pushError('Must include at least one itemized line item.')
-      return
-    }
-
-    for (let i = 0; i < lineItems.length; i++) {
-      const it = lineItems[i]
-      if (!it.description.trim()) {
-        pushError(`Line item #${i + 1} description is required.`)
-        return
-      }
-      if (isNaN(it.cost) || it.cost < 0) {
-        pushError(`Line item #${i + 1} cost cannot be negative.`)
-        return
-      }
-    }
-
-    if (!estimatedCompletion.trim()) {
-      pushError('Please provide an estimated completion turnaround.')
+    if (!parsed.success) {
+      pushError(parsed.error.issues[0]?.message ?? 'Please check the quotation form.')
       return
     }
 
@@ -593,12 +579,17 @@ export function RepairQuotationSection({
                     <Button
                       variant="destructive"
                       size="sm"
-                      onClick={() =>
+                      onClick={() => {
+                        const parsed = quotationDeclineFeedbackSchema.safeParse(declineFeedback)
+                        if (!parsed.success) {
+                          pushError(parsed.error.issues[0]?.message ?? 'Invalid feedback.')
+                          return
+                        }
                         decideMutation.mutate({
                           decision: 'rejected',
-                          feedback: declineFeedback,
+                          feedback: parsed.data,
                         })
-                      }
+                      }}
                       disabled={decideMutation.isPending}
                     >
                       Confirm Decline & Cancel Repair

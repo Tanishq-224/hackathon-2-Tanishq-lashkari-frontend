@@ -26,6 +26,7 @@ import {
 } from '@/features/repairs/api/repairsApi'
 import { useAppToast } from '@/components/shared/AppToastProvider'
 import { getApiErrorMessage } from '@/lib/api-client'
+import { createRepairFormSchema } from '@/features/repairs/lib/create-repair-form-schema'
 import { scrollToFormField } from '@/lib/form-feedback'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
@@ -123,33 +124,30 @@ export function NewRepairRequestPage() {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
 
-    if (!brand.trim()) {
-      pushError('Please enter the device brand (e.g. Apple, Samsung).')
-      scrollToFormField('brand')
-      return
-    }
-
-    if (!modelName.trim()) {
-      pushError('Please enter the device model (e.g. iPhone 14 Pro, ThinkPad X1).')
-      scrollToFormField('modelName')
-      return
-    }
-
-    if (description.trim().length < 10) {
-      pushError('Please describe the problem in at least 10 characters.')
-      scrollToFormField('description')
-      return
-    }
-
-    mutation.mutate({
+    const parsed = createRepairFormSchema.safeParse({
       deviceType,
-      brand: brand.trim(),
-      modelName: modelName.trim(),
+      brand,
+      modelName,
       issueCategory,
-      description: description.trim(),
+      description,
       urgency,
       images,
     })
+
+    if (!parsed.success) {
+      const firstIssue = parsed.error.issues[0]
+      const fieldKey =
+        firstIssue?.path[0] === 'brand' ||
+        firstIssue?.path[0] === 'modelName' ||
+        firstIssue?.path[0] === 'description'
+          ? String(firstIssue.path[0])
+          : 'description'
+      pushError(firstIssue?.message ?? 'Please check the form and try again.')
+      scrollToFormField(fieldKey)
+      return
+    }
+
+    mutation.mutate(parsed.data)
   }
 
   return (

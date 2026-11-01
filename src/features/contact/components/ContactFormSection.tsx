@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button'
 import { useAuthSession } from '@/hooks/useAuthSession'
 import { getApiErrorMessage } from '@/lib/api-client'
 import { getStartRepairRequestPath } from '@/lib/repair-entry'
+import { sanitizePhoneInput } from '@/lib/validation/fields'
 import { SITE_CONTACT } from '@/lib/site-contact'
 import { cn } from '@/lib/utils'
 
@@ -224,7 +225,7 @@ export function ContactFormSection() {
                     autoComplete="tel"
                     placeholder={SITE_CONTACT.phoneDisplay}
                     className={fieldClassName}
-                    {...register('phone')}
+                    {...register('phone', { setValueAs: sanitizePhoneInput })}
                   />
                 </ContactFormField>
               </div>

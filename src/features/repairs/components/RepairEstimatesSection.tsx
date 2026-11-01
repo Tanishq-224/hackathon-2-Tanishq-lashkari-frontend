@@ -28,6 +28,7 @@ import {
   estimateStatusLabel,
   isEstimateActionable,
 } from '@/features/repairs/lib/estimate-status'
+import { rejectEstimateReasonSchema } from '@/features/repairs/lib/repair-feedback-schemas'
 import { useAppToast } from '@/components/shared/AppToastProvider'
 import { getApiErrorMessage } from '@/lib/api-client'
 import { formatUsd } from '@/lib/format-money'
@@ -317,12 +318,17 @@ export function RepairEstimatesSection({
                               size="sm"
                               variant="destructive"
                               disabled={rejectMutation.isPending}
-                              onClick={() =>
+                              onClick={() => {
+                                const parsed = rejectEstimateReasonSchema.safeParse(rejectReason)
+                                if (!parsed.success) {
+                                  pushError(parsed.error.issues[0]?.message ?? 'Invalid reason.')
+                                  return
+                                }
                                 rejectMutation.mutate({
                                   estimateId: est.id,
-                                  reason: rejectReason.trim() || undefined,
+                                  reason: parsed.data,
                                 })
-                              }
+                              }}
                             >
                               Confirm reject
                             </Button>

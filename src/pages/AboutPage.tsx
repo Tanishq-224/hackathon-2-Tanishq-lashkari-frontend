@@ -25,8 +25,9 @@ export function AboutPage() {
       <ScrollFadeIn distance={24} stagger={0.08}>
         <AboutEditorialStatsRows />
       </ScrollFadeIn>
-      {/* No ScrollFadeIn — GSAP pin + horizontal scrub need a stable scroll root */}
-      <AboutEditorialWorkflowShowcase />
+      <ScrollFadeIn distance={24} stagger={0.06}>
+        <AboutEditorialWorkflowShowcase />
+      </ScrollFadeIn>
       <ScrollFadeIn distance={24} stagger={0.1}>
         <AboutEditorialPrinciples />
       </ScrollFadeIn>

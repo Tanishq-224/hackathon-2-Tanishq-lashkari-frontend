@@ -112,7 +112,7 @@ describe('AboutPage public sections', () => {
       screen.getByRole('region', { name: /the repairex solution/i }),
     ).toBeInTheDocument()
     expect(
-      screen.getByRole('region', { name: /repair workflow overview/i }),
+      screen.getByRole('region', { name: /structured repair journey/i }),
     ).toBeInTheDocument()
     expect(
       screen.getByRole('region', { name: /product principles/i }),

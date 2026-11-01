@@ -15,6 +15,7 @@ import {
 } from '@/features/auth/lib/auth-schemas'
 import { useAppToast } from '@/components/shared/AppToastProvider'
 import { getApiErrorMessage } from '@/lib/api-client'
+import { sanitizeOtpInput } from '@/lib/validation/fields'
 import { cn } from '@/lib/utils'
 
 /**
@@ -133,7 +134,8 @@ export function ResetPasswordPage() {
               'font-mono tracking-[0.3em]',
               errors.otp && 'border-destructive focus-visible:ring-destructive/20',
             )}
-            {...register('otp')}
+            autoComplete="one-time-code"
+            {...register('otp', { setValueAs: sanitizeOtpInput })}
           />
           {errors.otp ? (
             <p className="text-caption text-destructive">{errors.otp.message}</p>

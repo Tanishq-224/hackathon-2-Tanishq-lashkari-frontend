@@ -1,17 +1,19 @@
 import { z } from 'zod'
 
-/** @description Shared password validation (matches backend). */
-export const passwordSchema = z
-  .string()
-  .min(8, 'Password must be at least 8 characters.')
-  .regex(/\d/, 'Include at least one number.')
-  .regex(/[^A-Za-z0-9]/, 'Include at least one special character.')
+import {
+  emailField,
+  otpField,
+  passwordField,
+  personNameField,
+} from '@/lib/validation/fields'
+
+export { passwordField as passwordSchema } from '@/lib/validation/fields'
 
 export const signupSchema = z
   .object({
-    fullName: z.string().trim().min(2, 'Enter your full name.'),
-    email: z.string().trim().email('Enter a valid email address.'),
-    password: passwordSchema,
+    fullName: personNameField,
+    email: emailField,
+    password: passwordField,
     confirmPassword: z.string(),
     role: z.enum(['customer', 'vendor']),
   })
@@ -21,27 +23,23 @@ export const signupSchema = z
   })
 
 export const loginSchema = z.object({
-  email: z.string().trim().email('Enter a valid email address.'),
+  email: emailField,
   password: z.string().min(1, 'Enter your password.'),
 })
 
 export const forgotPasswordSchema = z.object({
-  email: z.string().trim().email('Enter a valid email address.'),
+  email: emailField,
 })
 
 export const verifyOtpSchema = z.object({
-  otp: z
-    .string()
-    .trim()
-    .length(6, 'Enter the 6-digit code.')
-    .regex(/^\d+$/, 'Use numbers only.'),
+  otp: otpField,
 })
 
 export const resetPasswordSchema = z
   .object({
-    email: z.string().trim().email(),
-    otp: z.string().trim().length(6, 'Enter the 6-digit code.'),
-    password: passwordSchema,
+    email: emailField,
+    otp: otpField,
+    password: passwordField,
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -55,15 +53,10 @@ export type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>
 export type VerifyOtpFormValues = z.infer<typeof verifyOtpSchema>
 export type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>
 
-/** @description Password change on dashboard profile (email comes from session). */
 export const profilePasswordResetSchema = z
   .object({
-    otp: z
-      .string()
-      .trim()
-      .length(6, 'Enter the 6-digit code.')
-      .regex(/^\d+$/, 'Use numbers only.'),
-    password: passwordSchema,
+    otp: otpField,
+    password: passwordField,
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -74,7 +67,7 @@ export const profilePasswordResetSchema = z
 export type ProfilePasswordResetFormValues = z.infer<typeof profilePasswordResetSchema>
 
 export const updateProfileSchema = z.object({
-  fullName: z.string().trim().min(2, 'Enter at least 2 characters.').max(80, 'Name is too long.'),
+  fullName: personNameField,
 })
 
 export type UpdateProfileFormValues = z.infer<typeof updateProfileSchema>

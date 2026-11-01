@@ -18,6 +18,7 @@ import {
 } from '@/features/auth/lib/auth-schemas'
 import { useAppToast } from '@/components/shared/AppToastProvider'
 import { getApiErrorMessage } from '@/lib/api-client'
+import { sanitizeOtpInput } from '@/lib/validation/fields'
 import { cn } from '@/lib/utils'
 
 type ProfilePasswordResetSectionProps = {
@@ -130,7 +131,7 @@ export function ProfilePasswordResetSection({ email }: ProfilePasswordResetSecti
               maxLength={6}
               placeholder="6-digit code"
               className={cn('mt-1.5 font-mono tracking-widest', errors.otp && 'border-destructive')}
-              {...register('otp')}
+              {...register('otp', { setValueAs: sanitizeOtpInput })}
             />
             {errors.otp ? (
               <p className="mt-1 text-caption text-destructive">{errors.otp.message}</p>

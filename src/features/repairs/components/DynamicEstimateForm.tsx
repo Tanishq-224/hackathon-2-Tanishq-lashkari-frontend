@@ -5,7 +5,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import type { DynamicSubmitEstimatePayload } from '@/features/repairs/api/repairsApi'
 import { useAppToast } from '@/components/shared/AppToastProvider'
+import { dynamicEstimateFormSchema } from '@/features/repairs/lib/dynamic-estimate-form-schema'
 import { scrollToFormField } from '@/lib/form-feedback'
+import { parseMoneyInput } from '@/lib/validation/fields'
 import { formatUsd } from '@/lib/format-money'
 
 type ComponentRow = {
@@ -91,66 +93,54 @@ export function DynamicEstimateForm({
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
 
-    for (let index = 0; index < rows.length; index += 1) {
-      const row = rows[index]
-      const keyBase = `component-${index}`
-      if (!row.component.trim() || row.component.trim().length < 2) {
-        const message = `Component name is required on row ${index + 1}.`
-        pushError(message)
-        scrollToFormField(keyBase)
-        return
+    const componentLines = rows.map((row, index) => {
+      const price = parseMoneyInput(row.price)
+      const warrantyMonths = Number.parseInt(row.warrantyMonths, 10)
+      return {
+        component: row.component,
+        price: price ?? Number.NaN,
+        warrantyMonths: Number.isFinite(warrantyMonths) ? warrantyMonths : Number.NaN,
+        _index: index,
       }
-      const priceRaw = row.price.trim()
-      if (!priceRaw) {
-        pushError(`Price is required on row ${index + 1}.`)
-        scrollToFormField(`${keyBase}-price`)
-        return
-      }
-      const price = parseFloat(priceRaw)
-      if (!Number.isFinite(price) || price <= 0) {
-        pushError(`Price must be greater than zero on row ${index + 1}.`)
-        scrollToFormField(`${keyBase}-price`)
-        return
-      }
-      const warranty = parseInt(row.warrantyMonths, 10)
-      if (!Number.isFinite(warranty) || warranty < 0) {
-        const message = `Enter warranty months for row ${index + 1}.`
-        pushError(message)
-        scrollToFormField(`${keyBase}-warranty`)
-        return
-      }
-    }
+    })
 
-    const labour = parseFloat(labourCost)
-    if (!Number.isFinite(labour) || labour < 0) {
-      pushError('Labour cost is required (use 0 if not applicable).')
-      scrollToFormField('labourCost')
-      return
-    }
+    const labourParsed = parseMoneyInput(labourCost)
+    const parsed = dynamicEstimateFormSchema.safeParse({
+      componentLines: componentLines.map(({ component, price, warrantyMonths }) => ({
+        component,
+        price,
+        warrantyMonths,
+      })),
+      labourCost: labourParsed ?? Number.NaN,
+      turnaroundTime,
+      notes,
+    })
 
-    if (!turnaroundTime.trim()) {
-      pushError('Estimated turnaround is required.')
-      scrollToFormField('turnaroundTime')
-      return
-    }
-
-    if (notes.trim().length < 5) {
-      pushError('Add a short repair description (at least 5 characters).')
-      scrollToFormField('notes')
+    if (!parsed.success) {
+      const firstIssue = parsed.error.issues[0]
+      const path = firstIssue?.path
+      let fieldKey = 'notes'
+      if (path?.[0] === 'componentLines' && typeof path[1] === 'number') {
+        const rowIndex = path[1]
+        const field = path[2]
+        fieldKey =
+          field === 'price'
+            ? `component-${rowIndex}-price`
+            : field === 'warrantyMonths'
+              ? `component-${rowIndex}-warranty`
+              : `component-${rowIndex}`
+      } else if (path?.[0] === 'labourCost') {
+        fieldKey = 'labourCost'
+      } else if (path?.[0] === 'turnaroundTime') {
+        fieldKey = 'turnaroundTime'
+      }
+      pushError(firstIssue?.message ?? 'Please check the estimate form.')
+      scrollToFormField(fieldKey)
       return
     }
 
     try {
-      await onSubmit({
-        componentLines: rows.map((row) => ({
-          component: row.component.trim(),
-          price: parseFloat(row.price),
-          warrantyMonths: parseInt(row.warrantyMonths, 10) || 0,
-        })),
-        labourCost: labour,
-        turnaroundTime: turnaroundTime.trim(),
-        notes: notes.trim(),
-      })
+      await onSubmit(parsed.data)
       pushSuccess(mode === 'edit' ? 'Estimate updated.' : 'Estimate submitted to the customer.')
     } catch {
       // Caller may toast API errors separately

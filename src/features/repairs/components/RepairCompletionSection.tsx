@@ -21,6 +21,10 @@ import {
 } from '@/features/repairs/api/repairsApi'
 import { useAppToast } from '@/components/shared/AppToastProvider'
 import { getApiErrorMessage } from '@/lib/api-client'
+import {
+  startRepairWorkFormSchema,
+  submitRepairCompletionFormSchema,
+} from '@/features/repairs/lib/repair-completion-form-schema'
 import { cn } from '@/lib/utils'
 
 type RepairCompletionSectionProps = {
@@ -62,10 +66,16 @@ export function RepairCompletionSection({
   }
 
   const startMutation = useMutation({
-    mutationFn: () =>
-      startRepairWorkRequest(repair.id, {
-        repairBenchNotes: benchNotes.trim() || undefined,
-      }),
+    mutationFn: () => {
+      const parsed = startRepairWorkFormSchema.safeParse({
+        repairBenchNotes: benchNotes,
+      })
+      if (!parsed.success) {
+        const message = parsed.error.issues[0]?.message ?? 'Invalid bench notes.'
+        throw new Error(message)
+      }
+      return startRepairWorkRequest(repair.id, parsed.data)
+    },
     onSuccess: (data) => {
       pushSuccess(data.message)
       invalidate()
@@ -74,11 +84,17 @@ export function RepairCompletionSection({
   })
 
   const completionMutation = useMutation({
-    mutationFn: () =>
-      submitRepairCompletionRequest(repair.id, {
+    mutationFn: () => {
+      const parsed = submitRepairCompletionFormSchema.safeParse({
         afterRepairImages: afterImages,
-        resolutionSummary: resolutionSummary.trim(),
-      }),
+        resolutionSummary,
+      })
+      if (!parsed.success) {
+        const message = parsed.error.issues[0]?.message ?? 'Please fix the form errors.'
+        throw new Error(message)
+      }
+      return submitRepairCompletionRequest(repair.id, parsed.data)
+    },
     onSuccess: (data) => {
       pushSuccess(data.message)
       invalidate()
