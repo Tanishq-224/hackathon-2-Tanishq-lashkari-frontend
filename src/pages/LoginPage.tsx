@@ -54,8 +54,13 @@ export function LoginPage() {
    */
   async function onSubmit(values: LoginFormValues) {
     try {
-      await loginRequest(values)
+      const response = await loginRequest(values)
       await queryClient.invalidateQueries({ queryKey: authSessionQueryKey })
+      const role = response.data?.user?.role
+      if (role === 'admin') {
+        void navigate('/dashboard/admin/contact')
+        return
+      }
       void navigate(redirectAfterLogin)
     } catch (error) {
       const message = getApiErrorMessage(error)

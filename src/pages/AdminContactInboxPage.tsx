@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Loader2, Mail, Phone } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
+import { AppSelect } from '@/components/ui/app-select'
 import { Button } from '@/components/ui/button'
 import { CONTACT_FORM_PLATFORM_TOPICS } from '@/features/contact/lib/contact-form-schema'
 import {
@@ -116,20 +117,17 @@ function ContactMessageDetailPanel({ message, onClose }: DetailPanelProps) {
       </div>
 
       <div className="mt-6 space-y-4">
-        <label className="block text-ui font-medium text-foreground">
-          Status
-          <select
+        <div className="space-y-1.5">
+          <label htmlFor="contact-detail-status" className="block text-ui font-medium text-foreground">
+            Status
+          </label>
+          <AppSelect
+            id="contact-detail-status"
             value={status}
-            onChange={(e) => setStatus(e.target.value as ContactMessageStatus)}
-            className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-ui"
-          >
-            {STATUS_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
+            options={STATUS_OPTIONS}
+            onChange={(next) => setStatus(next as ContactMessageStatus)}
+          />
+        </div>
 
         <label className="block text-ui font-medium text-foreground">
           Internal note (team only)
@@ -206,32 +204,30 @@ export function AdminContactInboxPage() {
       </header>
 
       <div className="flex flex-wrap gap-3">
-        <select
+        <AppSelect
+          size="sm"
+          ariaLabel="Filter by status"
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as ContactMessageStatus | 'all')}
-          className="rounded-lg border border-border bg-background px-3 py-2 text-ui"
-          aria-label="Filter by status"
-        >
-          <option value="all">All statuses</option>
-          {STATUS_OPTIONS.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-        <select
+          onChange={(next) => setStatusFilter(next as ContactMessageStatus | 'all')}
+          options={[
+            { value: 'all', label: 'All statuses' },
+            ...STATUS_OPTIONS,
+          ]}
+        />
+        <AppSelect
+          size="sm"
+          className="min-w-[12rem] sm:min-w-[16rem]"
+          ariaLabel="Filter by topic"
           value={topicFilter}
-          onChange={(e) => setTopicFilter(e.target.value as ContactTopic | 'all')}
-          className="rounded-lg border border-border bg-background px-3 py-2 text-ui"
-          aria-label="Filter by topic"
-        >
-          <option value="all">All topics</option>
-          {CONTACT_FORM_PLATFORM_TOPICS.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+          onChange={(next) => setTopicFilter(next as ContactTopic | 'all')}
+          options={[
+            { value: 'all', label: 'All topics' },
+            ...CONTACT_FORM_PLATFORM_TOPICS.map((option) => ({
+              value: option.value,
+              label: option.label,
+            })),
+          ]}
+        />
       </div>
 
       {isLoading ? (
