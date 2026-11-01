@@ -1,6 +1,6 @@
 import { ArrowRight, Laptop, Smartphone, Tablet, type LucideIcon } from 'lucide-react'
-import { Link } from 'react-router-dom'
 
+import { StartRepairRequestLink } from '@/components/shared/StartRepairRequestLink'
 import { PageSection } from '@/components/shared/PageSection'
 import { SectionHeader } from '@/components/shared/SectionHeader'
 import { buttonVariants } from '@/components/ui/button'
@@ -98,8 +98,7 @@ export function DeviceCategoriesSection() {
       </ul>
 
       <div className="mt-10">
-        <Link
-          to="/contact"
+        <StartRepairRequestLink
           className={cn(
             buttonVariants({ size: 'lg' }),
             'h-12 rounded-full bg-foreground px-7 text-background hover:bg-foreground/90',
@@ -107,7 +106,7 @@ export function DeviceCategoriesSection() {
         >
           Start a repair request
           <ArrowRight aria-hidden className="size-4" />
-        </Link>
+        </StartRepairRequestLink>
       </div>
     </PageSection>
   )

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 
 import ctaFactoryBackground from '@/assets/cta-factory-background.jpg'
+import { StartRepairRequestLink } from '@/components/shared/StartRepairRequestLink'
 import { Container } from '@/components/shared/Container'
 import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -40,17 +41,14 @@ export function HomeFinalCtaSection() {
             the final quote, and stay updated until the repair is complete.
           </p>
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row sm:flex-wrap">
-            <Link
-              to="/contact"
+            <StartRepairRequestLink
               className={cn(
                 buttonVariants({
                   size: 'lg',
                   className: 'h-11 w-full rounded-full px-7 sm:w-auto',
                 }),
               )}
-            >
-              Start a repair request
-            </Link>
+            />
             <Link
               to="/about"
               className={cn(

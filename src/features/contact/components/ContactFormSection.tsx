@@ -1,18 +1,22 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useState, type ReactNode } from 'react'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
+import { Link } from 'react-router-dom'
 
 import contactFormBackground from '@/assets/devices/device-lifestyle.jpg'
 import { RepairexBrandMark } from '@/components/layout/RepairexBrandMark'
 import { Container } from '@/components/shared/Container'
+import { ContactTopicSelect } from '@/features/contact/components/ContactTopicSelect'
 import { submitContactMessage } from '@/features/contact/api/submitContactMessage'
 import {
-  CONTACT_FORM_TOPICS,
+  CONTACT_FORM_PLATFORM_TOPICS,
   contactFormSchema,
   type ContactFormValues,
 } from '@/features/contact/lib/contact-form-schema'
 import { Button } from '@/components/ui/button'
+import { useAuthSession } from '@/hooks/useAuthSession'
 import { getApiErrorMessage } from '@/lib/api-client'
+import { getStartRepairRequestPath } from '@/lib/repair-entry'
 import { SITE_CONTACT } from '@/lib/site-contact'
 import { cn } from '@/lib/utils'
 
@@ -23,10 +27,10 @@ type FieldProps = {
   children: ReactNode
 }
 
+const defaultPlatformTopic = CONTACT_FORM_PLATFORM_TOPICS[0].value
+
 /**
  * @description Accessible labeled field wrapper for the contact form card.
- * @param {FieldProps} props - Field id, label, error, and control.
- * @returns {JSX.Element} Form field block.
  */
 function ContactFormField({ id, label, error, children }: FieldProps) {
   return (
@@ -48,10 +52,10 @@ const fieldClassName =
   'flex h-11 w-full rounded-xl border border-border/80 bg-background px-3.5 text-body text-foreground shadow-sm outline-none transition placeholder:text-muted-foreground/70 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20'
 
 /**
- * @description Standalone form block on imagery — support cards live in ContactInfoSection.
- * @returns {JSX.Element} Contact form section with floating card.
+ * @description Platform contact form; repair flows redirect to dashboard or login.
  */
 export function ContactFormSection() {
+  const { isAuthenticated } = useAuthSession()
   const [submitMessage, setSubmitMessage] = useState<string | null>(null)
   const [submitVariant, setSubmitVariant] = useState<'success' | 'error' | null>(
     null,
@@ -61,6 +65,7 @@ export function ContactFormSection() {
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<ContactFormValues>({
     resolver: zodResolver(contactFormSchema),
@@ -68,17 +73,11 @@ export function ContactFormSection() {
       fullName: '',
       email: '',
       phone: '',
-      topic: 'repair-request',
+      topic: defaultPlatformTopic,
       message: '',
     },
   })
 
-  /**
-   * @description Posts the contact form to the API and surfaces the server response.
-   * @async
-   * @param {ContactFormValues} values - Validated form values.
-   * @returns {Promise<void>}
-   */
   async function onSubmit(values: ContactFormValues) {
     setSubmitMessage(null)
     setSubmitVariant(null)
@@ -91,7 +90,7 @@ export function ContactFormSection() {
         fullName: '',
         email: '',
         phone: '',
-        topic: 'repair-request',
+        topic: defaultPlatformTopic,
         message: '',
       })
     } catch (error) {
@@ -99,6 +98,8 @@ export function ContactFormSection() {
       setSubmitMessage(getApiErrorMessage(error))
     }
   }
+
+  const repairWorkspaceHref = getStartRepairRequestPath(isAuthenticated)
 
   return (
     <section
@@ -130,16 +131,25 @@ export function ContactFormSection() {
               </span>
             </div>
             <p className="mt-5 max-w-md text-body leading-relaxed text-white/85">
-              Share your repair or support question here. Success shows only after
-              our API accepts your submission — phone and email are in the section
-              above.
+              Use this form for platform and vendor questions. For device repairs, open
+              your{' '}
+              <Link
+                to={repairWorkspaceHref}
+                className="font-semibold text-white underline decoration-white/40 underline-offset-2 hover:decoration-white"
+              >
+                repair workspace
+              </Link>
+              .
             </p>
           </div>
 
           <div className="theme-marketing-card w-full max-w-none rounded-[1.75rem] bg-card p-6 shadow-xl sm:p-8 lg:p-9">
             <h2 className="font-display text-h2 font-bold tracking-tight text-foreground">
-              Send us a message
+              Message the Repairex team
             </h2>
+            <p className="mt-2 text-ui text-muted-foreground">
+              Repairs and order status are handled in your dashboard — not this form.
+            </p>
 
             <form
               className="mt-6 space-y-5"
@@ -183,23 +193,25 @@ export function ContactFormSection() {
               </div>
 
               <div className="grid gap-5 sm:grid-cols-2">
-                <ContactFormField
-                  id="contact-topic"
-                  label="Topic"
-                  error={errors.topic?.message}
-                >
-                  <select
-                    id="contact-topic"
-                    className={cn(fieldClassName, 'appearance-none')}
-                    {...register('topic')}
-                  >
-                    {CONTACT_FORM_TOPICS.map(({ value, label }) => (
-                      <option key={value} value={value}>
-                        {label}
-                      </option>
-                    ))}
-                  </select>
-                </ContactFormField>
+              <ContactFormField
+                id="contact-topic"
+                label="Message topic"
+                error={errors.topic?.message}
+              >
+                <Controller
+                  name="topic"
+                  control={control}
+                  render={({ field }) => (
+                    <ContactTopicSelect
+                      id="contact-topic"
+                      value={field.value}
+                      invalid={Boolean(errors.topic)}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                    />
+                  )}
+                />
+              </ContactFormField>
 
                 <ContactFormField
                   id="contact-phone"
@@ -225,7 +237,7 @@ export function ContactFormSection() {
                 <textarea
                   id="contact-message"
                   rows={4}
-                  placeholder="Type something here"
+                  placeholder="Platform or partnership details"
                   className={cn(
                     fieldClassName,
                     'h-auto min-h-[7.5rem] resize-y py-3 leading-relaxed',
@@ -256,7 +268,7 @@ export function ContactFormSection() {
                 disabled={isSubmitting}
                 className="h-12 w-full rounded-full bg-primary/20 text-foreground shadow-sm transition hover:bg-primary hover:text-primary-foreground disabled:opacity-60"
               >
-                {isSubmitting ? 'Sending…' : 'Submit'}
+                {isSubmitting ? 'Sending…' : 'Send message'}
               </Button>
             </form>
           </div>

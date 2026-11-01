@@ -1,6 +1,7 @@
 import { ArrowUpRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
+import { StartRepairRequestLink } from '@/components/shared/StartRepairRequestLink'
 import { Container } from '@/components/shared/Container'
 import { ScrollFadeIn } from '@/components/shared/ScrollFadeIn'
 import { TypewriterText } from '@/components/shared/TypewriterText'
@@ -72,17 +73,14 @@ export function HomeHeroSection() {
           </p>
 
           <div className="flex max-w-3xl flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center lg:col-start-1">
-            <Link
-              to="/contact"
+            <StartRepairRequestLink
               className={cn(
                 buttonVariants({
                   size: 'lg',
                   className: 'h-11 w-full rounded-full px-7 sm:w-auto',
                 }),
               )}
-            >
-              Start a repair request
-            </Link>
+            />
             <a
               href="#how-it-works"
               className={cn(

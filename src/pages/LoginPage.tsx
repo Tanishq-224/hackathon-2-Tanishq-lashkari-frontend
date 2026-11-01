@@ -15,6 +15,7 @@ import { loginSchema, type LoginFormValues } from '@/features/auth/lib/auth-sche
 import { authSessionQueryKey } from '@/hooks/useAuthSession'
 import { useAppToast } from '@/components/shared/AppToastProvider'
 import { getApiErrorMessage } from '@/lib/api-client'
+import { resolveSafeRedirectPath } from '@/lib/safe-redirect'
 import { cn } from '@/lib/utils'
 
 /**
@@ -26,6 +27,7 @@ export function LoginPage() {
   const queryClient = useQueryClient()
   const [searchParams] = useSearchParams()
   const oauthError = searchParams.get('error')
+  const redirectAfterLogin = resolveSafeRedirectPath(searchParams.get('redirect'))
   const { pushError } = useAppToast()
 
   useEffect(() => {
@@ -54,7 +56,7 @@ export function LoginPage() {
     try {
       await loginRequest(values)
       await queryClient.invalidateQueries({ queryKey: authSessionQueryKey })
-      void navigate('/')
+      void navigate(redirectAfterLogin)
     } catch (error) {
       const message = getApiErrorMessage(error)
       pushError(message)
@@ -91,7 +93,10 @@ export function LoginPage() {
     >
       <div className="space-y-5">
         {/* Google Identity Services Sign-In Button */}
-        <GoogleSignInButton onError={pushError} />
+        <GoogleSignInButton
+          onError={pushError}
+          redirectTo={redirectAfterLogin}
+        />
 
         {/* Clean Flex Separator */}
         <div className="flex items-center gap-3 py-1">

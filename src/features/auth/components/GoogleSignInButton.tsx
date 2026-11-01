@@ -42,12 +42,14 @@ type GoogleSignInButtonProps = {
   className?: string
   text?: 'continue_with' | 'signin_with' | 'signup_with'
   onError?: (message: string) => void
+  redirectTo?: string
 }
 
 export function GoogleSignInButton({
   className,
   text = 'continue_with',
   onError,
+  redirectTo = '/dashboard',
 }: GoogleSignInButtonProps) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -106,7 +108,7 @@ export function GoogleSignInButton({
           try {
             await googleSignInRequest(response.credential)
             await queryClient.invalidateQueries({ queryKey: authSessionQueryKey })
-            navigate('/dashboard')
+            navigate(redirectTo)
           } catch (err) {
             const message = getApiErrorMessage(err)
             onError?.(message)
@@ -132,7 +134,7 @@ export function GoogleSignInButton({
     } catch (err) {
       console.warn('[google-auth] GIS initialization error:', err)
     }
-  }, [gisLoaded, googleClientId, navigate, queryClient, text, onError])
+  }, [gisLoaded, googleClientId, navigate, queryClient, redirectTo, text, onError])
 
   /**
    * @description Fallback click handler when GIS button is not active or VITE_GOOGLE_CLIENT_ID is missing.
