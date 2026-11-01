@@ -13,6 +13,7 @@ type AboutProcessParallaxImageProps = {
   alt: string
   /** @description Alternate drift direction for visual rhythm. */
   reverse?: boolean
+  imageFit?: 'cover' | 'contain'
   className?: string
 }
 
@@ -25,15 +26,17 @@ export function AboutProcessParallaxImage({
   src,
   alt,
   reverse = false,
+  imageFit = 'cover',
   className,
 }: AboutProcessParallaxImageProps) {
+  const useContain = imageFit === 'contain'
   const frameRef = useRef<HTMLElement>(null)
   const parallaxRef = useRef<HTMLDivElement>(null)
 
   useLayoutEffect(() => {
     const frame = frameRef.current
     const layer = parallaxRef.current
-    if (!frame || !layer || isTestEnv()) {
+    if (!frame || !layer || isTestEnv() || useContain) {
       return undefined
     }
 
@@ -67,13 +70,14 @@ export function AboutProcessParallaxImage({
       tween.scrollTrigger?.kill()
       tween.kill()
     }
-  }, [reverse])
+  }, [reverse, useContain])
 
   return (
     <figure
       ref={frameRef}
       className={cn(
-        'relative w-full min-w-0 overflow-hidden rounded-2xl border border-border/90 bg-muted shadow-sm',
+        'relative w-full min-w-0 overflow-hidden rounded-2xl border border-border/90 shadow-sm',
+        useContain ? 'bg-[#f5f2ea]' : 'bg-muted',
         className,
       )}
     >
@@ -85,7 +89,10 @@ export function AboutProcessParallaxImage({
 
       <div
         ref={parallaxRef}
-        className="pointer-events-none absolute inset-x-0 top-[-12%] h-[124%] w-full overflow-hidden will-change-transform"
+        className={cn(
+          'pointer-events-none absolute w-full overflow-hidden will-change-transform',
+          useContain ? 'inset-0' : 'inset-x-0 top-[-12%] h-[124%]',
+        )}
       >
         <img
           src={src}
@@ -93,7 +100,10 @@ export function AboutProcessParallaxImage({
           loading="lazy"
           decoding="async"
           draggable={false}
-          className="size-full min-h-full min-w-full object-cover object-center"
+          className={cn(
+            'size-full min-h-full min-w-full object-center',
+            useContain ? 'object-contain p-1 sm:p-2' : 'object-cover',
+          )}
           onLoad={() => {
             ScrollTrigger.refresh()
           }}

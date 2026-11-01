@@ -61,6 +61,7 @@ export function AboutEditorialWorkflowShowcase() {
               <AboutProcessParallaxImage
                 src={step.image}
                 alt={step.imageAlt}
+                imageFit={step.imageFit}
                 reverse={index % 2 === 1}
                 className={cn(
                   'w-full sm:col-span-2 sm:max-w-lg',

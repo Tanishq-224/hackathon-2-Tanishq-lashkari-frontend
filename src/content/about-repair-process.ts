@@ -1,6 +1,6 @@
 import aboutProgressImage from '@/assets/about-accountability-progress.jpg'
+import selectTechnicianImage from '@/assets/about-process-select-technician.jpg'
 import compareEstimatesImage from '@/assets/devices/why-compare-quotations.jpg'
-import deviceLifestyleImage from '@/assets/devices/device-lifestyle.jpg'
 import devicePhoneImage from '@/assets/devices/device-phone.jpg'
 import structuredWorkflowImage from '@/assets/devices/why-structured-workflow.jpg'
 
@@ -11,6 +11,8 @@ export type AboutRepairProcessStep = {
   body: string
   image: string
   imageAlt: string
+  /** @description Use contain for wide UI/marketing art so text stays readable. */
+  imageFit?: 'cover' | 'contain'
 }
 
 /** @description Five-step Repairex journey for the About “Our process” section. */
@@ -36,8 +38,10 @@ export const REPAIREX_ABOUT_PROCESS_STEPS: AboutRepairProcessStep[] = [
     number: '03',
     title: 'Select your technician',
     body: 'Choose the option that fits your timeline and repair scope. Your assigned vendor follows up with physical diagnosis and an itemized final quotation.',
-    image: deviceLifestyleImage,
-    imageAlt: 'Everyday devices ready for professional repair support',
+    image: selectTechnicianImage,
+    imageFit: 'contain',
+    imageAlt:
+      'Choose a technician, then physical diagnosis and an itemized final quotation in the Repairex flow',
   },
   {
     id: 'process-04',
