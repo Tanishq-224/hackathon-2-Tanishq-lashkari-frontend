@@ -1,7 +1,7 @@
 import aboutProgressImage from '@/assets/about-accountability-progress.jpg'
+import structuredRequestImage from '@/assets/about-process-structured-request.jpg'
 import selectTechnicianImage from '@/assets/about-process-select-technician.jpg'
 import compareEstimatesImage from '@/assets/devices/why-compare-quotations.jpg'
-import devicePhoneImage from '@/assets/devices/device-phone.jpg'
 import structuredWorkflowImage from '@/assets/devices/why-structured-workflow.jpg'
 
 export type AboutRepairProcessStep = {
@@ -22,8 +22,10 @@ export const REPAIREX_ABOUT_PROCESS_STEPS: AboutRepairProcessStep[] = [
     number: '01',
     title: 'Submit a structured request',
     body: 'Describe the device, issue category, and optional photos so every eligible vendor starts from the same brief — not a vague chat thread.',
-    image: devicePhoneImage,
-    imageAlt: 'Customer documenting a phone repair request with clear device details',
+    image: structuredRequestImage,
+    imageFit: 'contain',
+    imageAlt:
+      'New repair request form showing device type, issue category, description, and optional photos',
   },
   {
     id: 'process-02',
